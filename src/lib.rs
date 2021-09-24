@@ -1,9 +1,8 @@
-use bindings::Windows::Win32::Foundation::{BOOL, HINSTANCE};
-use bindings::Windows::Win32::System::LibraryLoader::DisableThreadLibraryCalls;
-use bindings::Windows::Win32::System::SystemServices::DLL_PROCESS_ATTACH;
-use std::ffi::c_void;
-use std::thread;
-
+pub use bindings::Windows::Win32::Foundation::{BOOL, HINSTANCE};
+pub use bindings::Windows::Win32::System::LibraryLoader::DisableThreadLibraryCalls;
+pub use bindings::Windows::Win32::System::SystemServices::DLL_PROCESS_ATTACH;
+pub use std::ffi::c_void;
+pub use std::thread;
 #[macro_export]
 macro_rules! cast {
     ($val:expr, $from:ident -> $to:ident) => {
@@ -19,14 +18,18 @@ macro_rules! create_entrypoint {
     ($function:expr) => {
         #[no_mangle]
         #[allow(non_snake_cake)]
-        extern "system" fn DllMain(h_module: HINSTANCE, dw_reason: u32, _: *const c_void) -> BOOL {
-            if dw_reason == DLL_PROCESS_ATTACH {
+        extern "system" fn DllMain(
+            h_module: $crate::HINSTANCE,
+            dw_reason: u32,
+            _: *const $crate::c_void,
+        ) -> $crate::BOOL {
+            if dw_reason == $crate::DLL_PROCESS_ATTACH {
                 unsafe {
-                    DisableThreadLibraryCalls(h_module);
+                    $crate::DisableThreadLibraryCalls(h_module);
                 }
-                thread::spawn(|| $function());
+                $crate::thread::spawn(|| $function());
             }
-            BOOL(1)
+            $crate::BOOL(1)
         }
     };
 }
