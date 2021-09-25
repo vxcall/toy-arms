@@ -1,8 +1,6 @@
 pub use bindings::Windows::Win32::Foundation::{BOOL, HINSTANCE};
 pub use bindings::Windows::Win32::System::LibraryLoader::DisableThreadLibraryCalls;
 pub use bindings::Windows::Win32::System::SystemServices::DLL_PROCESS_ATTACH;
-pub use std::ffi::c_void;
-pub use std::thread;
 #[macro_export]
 macro_rules! cast {
     ($val:expr, $from:ident -> $to:ident) => {
@@ -32,4 +30,13 @@ macro_rules! create_entrypoint {
             $crate::BOOL(1)
         }
     };
+}
+
+pub fn return_hello() -> String {
+    "hello".to_string()
+}
+
+#[test]
+fn did_return_hello() {
+    assert_eq!("hello".to_string(), return_hello());
 }
