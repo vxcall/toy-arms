@@ -1,6 +1,6 @@
-pub use bindings::Windows::Win32::Foundation::{BOOL, HINSTANCE};
-pub use bindings::Windows::Win32::System::LibraryLoader::DisableThreadLibraryCalls;
-pub use bindings::Windows::Win32::System::SystemServices::DLL_PROCESS_ATTACH;
+pub use bindings::{DisableThreadLibraryCalls, BOOL, DLL_PROCESS_ATTACH, HINSTANCE};
+pub mod vk;
+
 #[macro_export]
 macro_rules! cast {
     ($val:expr, $from:ident -> $to:ident) => {
@@ -32,11 +32,15 @@ macro_rules! create_entrypoint {
     };
 }
 
-pub fn return_hello() -> String {
-    "hello".to_string()
-}
+pub use self::keyboard::detect_keydown;
+pub mod keyboard {
+    use bindings::GetAsyncKeyState;
 
-#[test]
-fn did_return_hello() {
-    assert_eq!("hello".to_string(), return_hello());
+    pub fn detect_keydown(vk_code: i32) -> bool {
+        if unsafe { GetAsyncKeyState(vk_code) } & 1 != 0 {
+            true
+        } else {
+            false
+        }
+    }
 }
