@@ -21,13 +21,13 @@ macro_rules! create_entrypoint {
         extern "system" fn DllMain(
             h_module: $crate::HINSTANCE,
             dw_reason: u32,
-            _: *const $crate::c_void,
+            _: *const ::std::ffi::c_void,
         ) -> $crate::BOOL {
             if dw_reason == $crate::DLL_PROCESS_ATTACH {
                 unsafe {
                     $crate::DisableThreadLibraryCalls(h_module);
                 }
-                $crate::thread::spawn(|| $function());
+                ::std::thread::spawn(|| $function());
             }
             $crate::BOOL(1)
         }
