@@ -1,7 +1,10 @@
 [package]
-name = "bindings"
+name = "toy-arms-bindings"
 version = "0.1.0"
 edition = "2018"
+authors = ["s3pt3mb3r <s3pt3mb3r@protonmail.com>"]
+description = "A bindings to win32metadata used by toy-arms."
+license = "PolyForm-Noncommercial"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
