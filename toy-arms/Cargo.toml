@@ -11,5 +11,5 @@ repository = "https://github.com/s3pt3mb3r/toy-arms"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bindings = { package = "toy-arms-bindings", path = "bindings" }
+bindings = { package = "toy-arms-bindings" }
 windows = "0.19.0"
