@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2018"
 authors = ["s3pt3mb3r <s3pt3mb3r@protonmail.com>"]
 description = "A crates designed to ease game hack in rust."
-license = "PolyForm-Noncommercial"
+license = "MIT"
 keywords = ["gamehack", "cheat", "windows"]
 repository = "https://github.com/s3pt3mb3r/toy-arms"
 
