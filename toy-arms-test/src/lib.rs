@@ -11,12 +11,16 @@ fn hack_main_thread() {
         AllocConsole();
     }
 
+    //unsafe {
+    //    let a = 0x434535;
+    //    *toy_arms::cast!(a, mut usize -> u8) = 38;
+    //}
+
     loop {
         unsafe {
             let client = toy_arms::cast!(&GetModuleHandleA("client.dll"), HINSTANCE -> usize);
 
-            let p_dw_force_attack = toy_arms::cast!(*client + 0x31ECB34, usize -> u8);
-            println!("{:?}", *p_dw_force_attack);
+            *toy_arms::cast!(*client + 0x31ECB34, u8) = 5;
             if toy_arms::detect_keydown(toy_arms::vk::VK_HOME) {
                 break;
             }

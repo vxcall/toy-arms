@@ -10,5 +10,4 @@ path = "src/lib.rs"
 [dependencies]
 bindings = { path = "../toy-arms/bindings/" }
 windows = "0.19.0"
-tokio = { version = "1.11.0", features = ["full"] }
 toy-arms = { path = "../toy-arms" }
