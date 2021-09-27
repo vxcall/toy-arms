@@ -7,9 +7,7 @@ description = "A crates designed to ease game hack in rust."
 license = "MIT"
 keywords = ["gamehack", "cheat", "windows"]
 repository = "https://github.com/s3pt3mb3r/toy-arms"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+readme = "README.md"
 
 [dependencies]
-bindings = { package = "toy-arms-bindings" }
-windows = "0.19.0"
+winapi = { version = "0.3.9", features = ["winuser", "libloaderapi"] }

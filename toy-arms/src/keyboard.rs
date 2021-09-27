@@ -1,4 +1,4 @@
-use bindings::GetAsyncKeyState;
+use winapi::um::winuser::GetAsyncKeyState;
 /// detect_keydown returns true when user pressed the specified key.
 /// # Example
 /// ```rust

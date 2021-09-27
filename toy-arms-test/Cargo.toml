@@ -8,6 +8,5 @@ crate-type = ["cdylib"]
 path = "src/lib.rs"
 
 [dependencies]
-bindings = { package = "toy-arms-bindings" }
-windows = "0.19.0"
-toy-arms = { path = "../toy-arms" }
+winapi = { version = "0.3.9", features = ["winuser", "libloaderapi", "consoleapi"] }
+toy-arms = {path = "../toy-arms"}

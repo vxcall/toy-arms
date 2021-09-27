@@ -1,19 +1,16 @@
-pub use bindings::{DisableThreadLibraryCalls, BOOL, DLL_PROCESS_ATTACH, HINSTANCE};
+pub use winapi::{
+    shared::minwindef::BOOL, shared::minwindef::HINSTANCE, shared::minwindef::TRUE,
+    um::libloaderapi::DisableThreadLibraryCalls, um::winnt::DLL_PROCESS_ATTACH,
+};
 
 /// cast is a substitution of reinterpret_cast in C++.
-/// * `$val` - address or variable you wanna cast.
-/// * `$from` - type of the variable you passed in $val.
-/// * `$to` - type you want to cast $val into.
+/// * `$address` - address or variable you wanna cast.
+/// * `$type` - type you want to cast $address into.
 #[macro_export]
 macro_rules! cast {
-    ($val:expr, $from:ident -> $to:ident) => {
-        $val as *const $from as *const $to
-    };
-    ($val:expr, mut $from:ident -> $to:ident) => {
-        $val as *mut $from as *mut $to
-    };
-    ($val:expr, $type:ident) => {
-        $val as *mut $type
+    // Value cast
+    ($address:expr, $type:ident) => {
+        $address as *mut $type
     };
 }
 
@@ -35,7 +32,14 @@ macro_rules! create_entrypoint {
                 }
                 ::std::thread::spawn(|| $function());
             }
-            $crate::BOOL(1)
+            $crate::TRUE
         }
+    };
+}
+
+#[macro_export]
+macro_rules! null_terminated {
+    ($str:expr) => {
+        format!("{}{}", $str, "\0").as_ptr() as *const i8
     };
 }
