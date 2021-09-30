@@ -2,7 +2,8 @@ use std::str::Utf8Error;
 
 pub use winapi::{
     shared::minwindef::BOOL, shared::minwindef::HINSTANCE, shared::minwindef::TRUE,
-    um::libloaderapi::DisableThreadLibraryCalls, um::winnt::DLL_PROCESS_ATTACH,
+    um::libloaderapi::DisableThreadLibraryCalls, um::winnt::DLL_PROCESS_ATTACH, um::consoleapi::AllocConsole,
+    um::wincon::FreeConsole,
 };
 
 /// cast is a substitution of reinterpret_cast in C++.
@@ -32,7 +33,15 @@ macro_rules! create_entrypoint {
                 unsafe {
                     $crate::DisableThreadLibraryCalls(h_module);
                 }
-                ::std::thread::spawn(|| $function());
+                ::std::thread::spawn(|| {
+                    if cfg!(debug_assertions) {
+                        unsafe {$crate::AllocConsole();}
+                    }
+                    $function();
+                    if cfg!(debug_assertions) {
+                        unsafe {$crate::FreeConsole();}
+                    }
+                });
             }
             $crate::TRUE
         }

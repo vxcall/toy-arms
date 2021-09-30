@@ -1,17 +1,17 @@
 use crate::{null_terminated_i8, read_null_terminated_string};
-use winapi::{
-    shared::minwindef::{DWORD, LPVOID},
-    um::libloaderapi::GetModuleHandleA,
-    um::winnt::PIMAGE_NT_HEADERS,
-    um::winnt::{PIMAGE_DOS_HEADER, PIMAGE_THUNK_DATA},
-    um::winnt::{PIMAGE_IMPORT_BY_NAME, PIMAGE_IMPORT_DESCRIPTOR},
-};
+use winapi::{shared::minwindef::{DWORD, LPVOID}, um::libloaderapi::GetModuleHandleA,
+ um::{libloaderapi::GetProcAddress, memoryapi::VirtualProtect, winnt::{PAGE_EXECUTE_READWRITE, PIMAGE_NT_HEADERS}},
+  um::winnt::{PIMAGE_DOS_HEADER, PIMAGE_THUNK_DATA}, um::winnt::{PIMAGE_IMPORT_BY_NAME, PIMAGE_IMPORT_DESCRIPTOR}};
 
-use std::ptr;
+use std::{mem::size_of, ptr};
+use winapi::shared::ntdef::{HANDLE, LPCWSTR};
+use winapi::um::minwinbase::LPSECURITY_ATTRIBUTES;
 
 pub struct IatFinder<'a> {
     pub module_name: &'a str,
     pub function_name: &'a str,
+    hook_function_address: LPVOID,
+    original_address: LPVOID,
     pub target_entry: *mut LPVOID,
 }
 
@@ -22,16 +22,27 @@ pub enum IatLookupError {
 }
 
 impl<'a> IatFinder<'a> {
-    pub fn new(module_name: &'a str, function_name: &'a str) -> Self {
+    pub fn new(module_name: &'a str, function_name: &'a str, hook_function_address: LPVOID, original_address: LPVOID) -> Self {
         IatFinder {
             module_name,
             function_name,
+            hook_function_address,
+            original_address,
             target_entry: ptr::null_mut(),
         }
     }
 
     pub unsafe fn run(&mut self) {
+        let addr = GetProcAddress(GetModuleHandleA(null_terminated_i8("KERNEL32.dll")), null_terminated_i8(self.function_name));
         self.target_entry = self.find_iat_entry().unwrap();
+        let mut old_protect = 0u32;
+        VirtualProtect(*self.target_entry, size_of::<LPVOID>(), PAGE_EXECUTE_READWRITE, &mut old_protect as _);
+
+        //println!("{:p}", self.original_address);
+        self.original_address = *self.target_entry;
+        //*self.target_entry = self.hook_function_address as _;
+
+        VirtualProtect(*self.target_entry, size_of::<LPVOID>(), old_protect, &mut old_protect as _);
     }
 
     unsafe fn find_iat_entry(&self) -> Result<*mut LPVOID, IatLookupError> {
@@ -56,7 +67,7 @@ impl<'a> IatFinder<'a> {
                 let function_name = read_null_terminated_string((*funciton_info).Name.as_ptr() as usize).unwrap_or_default();
 
                 if function_name == self.function_name {
-                    println!("found {}", self.function_name);
+                    //println!("found {}", self.function_name);
                     return Ok(((dos_base + (*ptr_import_descriptor).FirstThunk as usize) as *mut LPVOID).offset(counter));
                 }
 

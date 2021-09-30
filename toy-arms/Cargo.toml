@@ -10,5 +10,5 @@ repository = "https://github.com/s3pt3mb3r/toy-arms"
 readme = "../README.md"
 
 [dependencies]
-winapi = { version = "0.3.9", features = ["winuser", "libloaderapi"] }
+winapi = { version = "0.3.9", features = ["winuser", "libloaderapi", "memoryapi"] }
 thiserror = "1.0.29"
