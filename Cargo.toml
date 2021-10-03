@@ -1,4 +1,19 @@
-[workspace]
-members = [
-    "toy-arms",
-]
+[package]
+name = "toy-arms"
+version = "0.3.0"
+edition = "2018"
+authors = ["s3pt3mb3r <s3pt3mb3r@protonmail.com>"]
+description = "A crates designed to ease game hack in rust."
+license = "MIT"
+keywords = ["gamehack", "cheat", "windows"]
+repository = "https://github.com/s3pt3mb3r/toy-arms"
+readme = "../README.md"
+
+[dependencies]
+winapi = { version = "0.3.9", features = ["winuser", "libloaderapi", "memoryapi", "consoleapi"] }
+thiserror = "1.0.29"
+detour = {version = "0.8.1", features = ["default"]}
+
+[[example]]
+name = "messageboxa_iat_hook"
+crate-type = ["cdylib"]

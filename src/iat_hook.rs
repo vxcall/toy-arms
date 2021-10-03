@@ -1,4 +1,4 @@
-use crate::{null_terminated_i8, read_null_terminated_string};
+use crate::{make_lpcstr, read_null_terminated_string};
 use winapi::{
     shared::minwindef::{DWORD, LPVOID},
     um::libloaderapi::GetModuleHandleA,
@@ -47,8 +47,8 @@ impl<'a> IatFinder<'a> {
 
     pub unsafe fn run(&mut self) {
         let addr = GetProcAddress(
-            GetModuleHandleA(null_terminated_i8("KERNEL32.dll")),
-            null_terminated_i8(self.function_name),
+            GetModuleHandleA(make_lpcstr("KERNEL32.dll")),
+            make_lpcstr(self.function_name),
         );
         self.target_entry = self.find_iat_entry().unwrap();
         let mut old_protect = 0u32;
@@ -74,7 +74,7 @@ impl<'a> IatFinder<'a> {
     }
 
     unsafe fn find_iat_entry(&self) -> Result<*mut LPVOID, IatLookupError> {
-        let dos_base = GetModuleHandleA(null_terminated_i8(self.module_name)) as usize;
+        let dos_base = GetModuleHandleA(make_lpcstr(self.module_name)) as usize;
         let ptr_dos_header = dos_base as PIMAGE_DOS_HEADER;
         let ptr_nt_headers = (dos_base + (*ptr_dos_header).e_lfanew as usize) as PIMAGE_NT_HEADERS;
         let ptr_optional_header = &(*ptr_nt_headers).OptionalHeader;

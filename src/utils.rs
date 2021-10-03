@@ -46,12 +46,12 @@ macro_rules! create_entrypoint {
     };
 }
 
-pub fn null_terminated_i8(text: &str) -> *const i8 {
+pub fn make_lpcstr(text: &str) -> *const i8 {
     format!("{}{}", text, "\0").as_ptr() as *const i8
 }
 
 pub unsafe fn get_module_function_address(module_name: &str, function_name: &str) -> FARPROC {
-    GetProcAddress(GetModuleHandleA(null_terminated_i8(module_name)), null_terminated_i8(function_name))
+    GetProcAddress(GetModuleHandleA(make_lpcstr(module_name)), make_lpcstr(function_name))
 }
 
 pub unsafe fn read_null_terminated_string(base_address: usize) -> Result<String, Utf8Error> {

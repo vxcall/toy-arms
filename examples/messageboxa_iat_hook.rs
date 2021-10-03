@@ -1,6 +1,6 @@
 use std::ptr;
 use std::time::Duration;
-use toy_arms::{get_module_function_address, null_terminated_i8, VirtualKeyCode};
+use toy_arms::{get_module_function_address, make_lpcstr, VirtualKeyCode};
 
 use winapi::shared::minwindef::UINT;
 use winapi::shared::windef::HWND;
@@ -33,7 +33,7 @@ struct HookArtifacts {
 
 fn hook_messageboxa(hwnd: HWND, text: LPCSTR, caption: LPCSTR, utype: UINT) -> c_int {
     unsafe {
-        MessageBoxAHook.call(hwnd, null_terminated_i8("This has been hacked"), caption, MB_OK)
+        MessageBoxAHook.call(hwnd, make_lpcstr("This has been hacked"), caption, MB_OK)
     }
 }
 
@@ -45,7 +45,7 @@ fn hack_main_thread() {
         MessageBoxAHook
             .initialize(target, hook_messageboxa).unwrap()
             .enable().unwrap();
-        MessageBoxA(ptr::null_mut(), null_terminated_i8("DEFAULT"), null_terminated_i8("DEFAULT"), MB_OK);
+        MessageBoxA(ptr::null_mut(), make_lpcstr("DEFAULT"), make_lpcstr("DEFAULT"), MB_OK);
         MessageBoxAHook.disable().unwrap();
     }
 }
