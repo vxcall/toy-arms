@@ -43,9 +43,9 @@ fn hack_main_thread() {
         let address = get_module_function_address("USER32.dll", "MessageBoxA");
         let target: MessageBoxAt = std::mem::transmute(address);
         MessageBoxAHook
-            .initialize(target, hook_messageboxa).expect("fuck")
-            .enable().expect("ccc");
+            .initialize(target, hook_messageboxa).unwrap()
+            .enable().unwrap();
         MessageBoxA(ptr::null_mut(), null_terminated_i8("DEFAULT"), null_terminated_i8("DEFAULT"), MB_OK);
-        MessageBoxAHook.disable().expect("not disabled");
+        MessageBoxAHook.disable().unwrap();
     }
 }

@@ -13,3 +13,7 @@ readme = "../README.md"
 winapi = { version = "0.3.9", features = ["winuser", "libloaderapi", "memoryapi"] }
 thiserror = "1.0.29"
 detour = {version = "0.8.1", features = ["default"]}
+
+[[example]]
+name = "messageboxa_iat_hook"
+crate-type = ["cdylib"]
