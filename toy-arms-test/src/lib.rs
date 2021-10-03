@@ -1,39 +1,51 @@
-use std::thread;
 use std::ptr;
 use std::time::Duration;
-use toy_arms::VirtualKeyCode;
+use toy_arms::{get_module_function_address, null_terminated_i8, VirtualKeyCode};
 
-use winapi::shared::minwindef::LPVOID;
-use winapi::um::fileapi::CreateFileW;
-use winapi::{shared::{minwindef::DWORD, ntdef::LPCWSTR}, um::{consoleapi::AllocConsole, minwinbase::LPSECURITY_ATTRIBUTES, winnt::HANDLE, winuser::{MB_OK, MessageBoxA}}, um::wincon::FreeConsole};
-use static_init::{dynamic};
+use winapi::shared::minwindef::UINT;
+use winapi::shared::windef::HWND;
+use winapi::{
+    shared::ntdef::LPCSTR,
+    um::{
+        winuser::{MessageBoxA, MB_OK},
+    },
+};
 
-toy_arms::create_entrypoint!(hack_main_thread);
+use std::os::raw::c_int;
+use detour::static_detour;
+use winapi::shared::ntdef::LPCWSTR;
+use winapi::um::winuser::MessageBoxW;
 
-type CreateFileWt = *const unsafe extern "system" fn(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD, HANDLE) -> HANDLE;
-
-const ORIGINAL_CREATE_FILEW: CreateFileWt = ptr::null_mut();
-//#[dynamic]
-//static mut original_create_filew:usize = 0;
-
-
-unsafe extern "system" fn hook_create_filew(lp_file_name: LPCWSTR, dw_desired_access: DWORD, dw_share_mode: DWORD, lp_security_attributes: LPSECURITY_ATTRIBUTES,
-dw_creation_disposition: DWORD, dw_flags_and_attributes: DWORD, h_template_file: HANDLE) -> HANDLE {
-    (*(ORIGINAL_CREATE_FILEW))(
-        lp_file_name, dw_desired_access, dw_share_mode, lp_security_attributes, dw_creation_disposition, dw_flags_and_attributes, h_template_file,
-    )
+static_detour! {
+    static MessageBoxAHook: unsafe extern "system" fn(HWND, LPCSTR, LPCSTR, UINT) -> c_int;
 }
 
+type MessageBoxAt = unsafe extern "system" fn(HWND, LPCSTR, LPCSTR, UINT) -> c_int;
+
+struct HookArtifacts {
+    target_fn: *mut std::ffi::c_void,
+    detour_fn: *mut std::ffi::c_void,
+    // *mut *mut std::ffi::c_void didnt work
+    // MessageBoxAt didnt work as well
+    original_fn: *mut std::ffi::c_void,
+    released: bool
+}
+
+fn hook_messageboxa(hwnd: HWND, text: LPCSTR, caption: LPCSTR, utype: UINT) -> c_int {
+    unsafe {
+        MessageBoxAHook.call(hwnd, null_terminated_i8("This has been hacked"), caption, MB_OK)
+    }
+}
+
+toy_arms::create_entrypoint!(hack_main_thread);
 fn hack_main_thread() {
     unsafe {
-        let mut iatf = toy_arms::IatFinder::new("notepad.exe", "CreateFileW",
-             hook_create_filew as LPVOID, ORIGINAL_CREATE_FILEW as LPVOID);
-        iatf.run();
-    }
-    loop {
-        if toy_arms::detect_keydown(VirtualKeyCode::VK_HOME) {
-            break
-        }
-        thread::sleep(Duration::from_millis(50));
+        let address = get_module_function_address("USER32.dll", "MessageBoxA");
+        let target: MessageBoxAt = std::mem::transmute(address);
+        MessageBoxAHook
+            .initialize(target, hook_messageboxa).expect("fuck")
+            .enable().expect("ccc");
+        MessageBoxA(ptr::null_mut(), null_terminated_i8("DEFAULT"), null_terminated_i8("DEFAULT"), MB_OK);
+        MessageBoxAHook.disable().expect("not disabled");
     }
 }

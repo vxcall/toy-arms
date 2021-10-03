@@ -12,3 +12,4 @@ readme = "../README.md"
 [dependencies]
 winapi = { version = "0.3.9", features = ["winuser", "libloaderapi", "memoryapi"] }
 thiserror = "1.0.29"
+detour = {version = "0.8.1", features = ["default"]}

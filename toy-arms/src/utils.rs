@@ -2,9 +2,11 @@ use std::str::Utf8Error;
 
 pub use winapi::{
     shared::minwindef::BOOL, shared::minwindef::HINSTANCE, shared::minwindef::TRUE,
-    um::libloaderapi::DisableThreadLibraryCalls, um::winnt::DLL_PROCESS_ATTACH, um::consoleapi::AllocConsole,
-    um::wincon::FreeConsole,
+    um::consoleapi::AllocConsole, um::libloaderapi::DisableThreadLibraryCalls,
+    um::wincon::FreeConsole, um::winnt::DLL_PROCESS_ATTACH,
 };
+use winapi::shared::minwindef::FARPROC;
+use winapi::um::libloaderapi::{GetModuleHandleA, GetProcAddress};
 
 /// cast is a substitution of reinterpret_cast in C++.
 /// * `$address` - address or variable you wanna cast.
@@ -24,22 +26,18 @@ macro_rules! create_entrypoint {
     ($function:expr) => {
         #[no_mangle]
         #[allow(non_snake_cake)]
-        extern "system" fn DllMain(
-            h_module: $crate::HINSTANCE,
-            dw_reason: u32,
-            _: *const ::std::ffi::c_void,
-        ) -> $crate::BOOL {
+        extern "system" fn DllMain(h_module: $crate::HINSTANCE, dw_reason: u32, _: *const ::std::ffi::c_void, ) -> $crate::BOOL {
             if dw_reason == $crate::DLL_PROCESS_ATTACH {
                 unsafe {
                     $crate::DisableThreadLibraryCalls(h_module);
                 }
                 ::std::thread::spawn(|| {
                     if cfg!(debug_assertions) {
-                        unsafe {$crate::AllocConsole();}
+                        unsafe { $crate::AllocConsole(); }
                     }
                     $function();
                     if cfg!(debug_assertions) {
-                        unsafe {$crate::FreeConsole();}
+                        unsafe { $crate::FreeConsole(); }
                     }
                 });
             }
@@ -52,6 +50,9 @@ pub fn null_terminated_i8(text: &str) -> *const i8 {
     format!("{}{}", text, "\0").as_ptr() as *const i8
 }
 
+pub unsafe fn get_module_function_address(module_name: &str, function_name: &str) -> FARPROC {
+    GetProcAddress(GetModuleHandleA(null_terminated_i8(module_name)), null_terminated_i8(function_name))
+}
 
 pub unsafe fn read_null_terminated_string(base_address: usize) -> Result<String, Utf8Error> {
     let mut name: Vec<u8> = Vec::new();
