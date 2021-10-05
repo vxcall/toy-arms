@@ -1,20 +1,17 @@
 use std::ptr;
-use std::time::Duration;
-use toy_arms::{get_module_function_address, make_lpcstr, VirtualKeyCode};
+use toy_arms::{get_module_function_address, make_lpcstr};
 
 use winapi::shared::minwindef::UINT;
 use winapi::shared::windef::HWND;
 use winapi::{
-    shared::ntdef::LPCSTR,
     um::{
+        winnt::LPCSTR,
         winuser::{MessageBoxA, MB_OK},
     },
 };
 
 use std::os::raw::c_int;
 use detour::static_detour;
-use winapi::shared::ntdef::LPCWSTR;
-use winapi::um::winuser::MessageBoxW;
 
 static_detour! {
     static MessageBoxAHook: unsafe extern "system" fn(HWND, LPCSTR, LPCSTR, UINT) -> c_int;
@@ -22,18 +19,9 @@ static_detour! {
 
 type MessageBoxAt = unsafe extern "system" fn(HWND, LPCSTR, LPCSTR, UINT) -> c_int;
 
-struct HookArtifacts {
-    target_fn: *mut std::ffi::c_void,
-    detour_fn: *mut std::ffi::c_void,
-    // *mut *mut std::ffi::c_void didnt work
-    // MessageBoxAt didnt work as well
-    original_fn: *mut std::ffi::c_void,
-    released: bool
-}
-
-fn hook_messageboxa(hwnd: HWND, text: LPCSTR, caption: LPCSTR, utype: UINT) -> c_int {
+fn hook_messageboxa(hwnd: HWND, _text: LPCSTR, caption: LPCSTR, utype: UINT) -> c_int {
     unsafe {
-        MessageBoxAHook.call(hwnd, make_lpcstr("This has been hacked"), caption, MB_OK)
+        MessageBoxAHook.call(hwnd, make_lpcstr("This has been hacked"), caption, utype)
     }
 }
 

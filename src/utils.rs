@@ -1,12 +1,12 @@
 use std::str::Utf8Error;
 
 pub use winapi::{
+    shared::minwindef::{FARPROC, HMODULE},
     shared::minwindef::BOOL, shared::minwindef::HINSTANCE, shared::minwindef::TRUE,
     um::consoleapi::AllocConsole, um::libloaderapi::DisableThreadLibraryCalls,
     um::wincon::FreeConsole, um::winnt::DLL_PROCESS_ATTACH,
+    um::libloaderapi::{GetModuleHandleA, GetProcAddress},
 };
-use winapi::shared::minwindef::FARPROC;
-use winapi::um::libloaderapi::{GetModuleHandleA, GetProcAddress};
 
 /// cast is a substitution of reinterpret_cast in C++.
 /// * `$address` - address or variable you wanna cast.
@@ -14,8 +14,11 @@ use winapi::um::libloaderapi::{GetModuleHandleA, GetProcAddress};
 #[macro_export]
 macro_rules! cast {
     // Value cast
-    ($address:expr, $type:ident) => {
+    (mut $address:expr, $type:ident) => {
         $address as *mut $type
+    };
+    ($address:expr, $type:ident) => {
+        $address as *const $type
     };
 }
 
@@ -46,12 +49,18 @@ macro_rules! create_entrypoint {
     };
 }
 
-pub fn make_lpcstr(text: &str) -> *const i8 {
-    format!("{}{}", text, "\0").as_ptr() as *const i8
+pub fn get_module_handle(text: &str) -> HMODULE {
+    unsafe {
+        GetModuleHandleA(make_lpcstr(text))
+    }
 }
 
 pub unsafe fn get_module_function_address(module_name: &str, function_name: &str) -> FARPROC {
-    GetProcAddress(GetModuleHandleA(make_lpcstr(module_name)), make_lpcstr(function_name))
+    GetProcAddress(get_module_handle(module_name), make_lpcstr(function_name))
+}
+
+pub fn make_lpcstr(text: &str) -> *const i8 {
+    format!("{}{}", text, "\0").as_ptr() as *const i8
 }
 
 pub unsafe fn read_null_terminated_string(base_address: usize) -> Result<String, Utf8Error> {
