@@ -2,3 +2,5 @@
 Cargo.lock
 
 .idea/
+
+toy-arms_derive/target/

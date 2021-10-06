@@ -12,6 +12,7 @@ readme = "../README.md"
 [dependencies]
 winapi = { version = "0.3.9", features = ["winuser", "libloaderapi", "memoryapi", "consoleapi", "winnt",] }
 thiserror = "1.0.29"
+toy-arms_derive = {path = "./toy-arms_derive", version = "0.1.0"}
 detour = {version = "0.8.1", features = ["default"]}
 
 [[example]]
