@@ -1,6 +1,6 @@
 [package]
 name = "toy-arms"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2018"
 authors = ["s3pt3mb3r <s3pt3mb3r@protonmail.com>"]
 description = "A crates designed to ease game hack in rust."
@@ -14,9 +14,13 @@ winapi = { version = "0.3.9", features = ["winuser", "libloaderapi", "memoryapi"
 toy-arms_derive = {path = "./toy-arms_derive", version = "0.1.0"}
 
 [[example]]
-name = "memory_example"
+name = "get_localplayer_health"
 crate-type = ["cdylib"]
 
 [[example]]
-name = "create_dll"
+name = "simplest_dll"
+crate-type = ["cdylib"]
+
+[[example]]
+name = "basic"
 crate-type = ["cdylib"]

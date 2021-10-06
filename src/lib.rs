@@ -14,5 +14,4 @@ pub use self::utils::*;
 
 pub trait GameObject {
     unsafe fn from_raw(address: *const usize) -> Option<*mut Self>;
-
 }

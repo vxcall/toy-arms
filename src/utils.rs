@@ -59,7 +59,7 @@ pub unsafe fn get_module_function_address(module_name: &str, function_name: &str
     GetProcAddress(get_module_handle(module_name), make_lpcstr(function_name))
 }
 
-pub fn make_lpcstr(text: &str) -> *const i8 {
+fn make_lpcstr(text: &str) -> *const i8 {
     format!("{}{}", text, "\0").as_ptr() as *const i8
 }
 
