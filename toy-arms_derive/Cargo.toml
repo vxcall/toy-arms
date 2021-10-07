@@ -1,6 +1,6 @@
 [package]
 name = "toy-arms_derive"
-version = "0.1.0"
+version = "0.1.5"
 edition = "2018"
 authors = ["s3pt3mb3r <s3pt3mb3r@protonmail.com>"]
 description = "A derive macro crate for toy-arms"

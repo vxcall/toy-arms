@@ -1,3 +1,4 @@
+![Crates.io](https://img.shields.io/crates/v/toy-arms?style=for-the-badge) 
 # :alembic: toy-arms
 Windows game hack helper utilities in rust.
 

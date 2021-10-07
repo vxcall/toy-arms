@@ -10,8 +10,14 @@ repository = "https://github.com/s3pt3mb3r/toy-arms"
 readme = "README.md"
 
 [dependencies]
-winapi = { version = "0.3.9", features = ["winuser", "libloaderapi", "memoryapi", "consoleapi", "winnt",] }
-toy-arms_derive = {path = "./toy-arms_derive", version = "0.1.0"}
+winapi = { version = "0.3.9", features = ["winuser", "minwindef", "libloaderapi", "memoryapi", "consoleapi", "winnt", "tlhelp32", "handleapi", "processthreadsapi", "impl-default", "errhandlingapi"] }
+toy-arms_derive = {path = "./toy-arms_derive", version = "0.1.1"}
+thiserror = "1.0.29"
+
+[features]
+default = ["internal"]
+internal = []
+external = []
 
 [[example]]
 name = "get_localplayer_health"
