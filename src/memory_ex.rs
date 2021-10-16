@@ -1,12 +1,16 @@
-use std::mem::size_of;
-use winapi::shared::minwindef::{FALSE, TRUE};
+use std::fmt::Debug;
+use winapi::shared::minwindef::{BYTE, FALSE, HMODULE, LPCVOID, LPVOID, TRUE};
 use winapi::um::handleapi::{CloseHandle, INVALID_HANDLE_VALUE};
 use winapi::um::processthreadsapi::OpenProcess;
 use winapi::um::tlhelp32::{CreateToolhelp32Snapshot, Module32First, Module32Next, MODULEENTRY32, Process32First, Process32Next, PROCESSENTRY32, TH32CS_SNAPMODULE, TH32CS_SNAPMODULE32, TH32CS_SNAPPROCESS};
 use winapi::um::winnt::{HANDLE, PROCESS_ALL_ACCESS};
+use winapi::um::errhandlingapi::GetLastError;
+
+use std::mem::size_of;
 use crate::read_null_terminated_string;
 use thiserror::Error;
-use winapi::um::errhandlingapi::GetLastError;
+use winapi::shared::basetsd::SIZE_T;
+use winapi::um::memoryapi::ReadProcessMemory;
 
 #[derive(Error, Debug)]
 pub enum MemoryExError {
@@ -17,11 +21,38 @@ pub enum MemoryExError {
     #[error("Process not found")]
     ProcessNotFound,
     #[error("Module not found")]
-    ModuleNotFound
+    ModuleNotFound,
+    #[error("ReadProcessMemory failed")]
+    ReadProcessMemoryFailed,
 }
 
+#[derive(Debug)]
+pub struct ModuleEx {
+    pub module_size: u32,
+    pub module_base_address: usize,
+    pub module_handle: HMODULE,
+    pub module_name: String,
+    pub module_path: String,
+}
+
+impl ModuleEx {
+    pub fn from_module_entry(module_entry: &MODULEENTRY32, module_name: String) -> Self {
+        unsafe {
+            ModuleEx {
+                module_size: module_entry.modBaseSize,
+                module_base_address: module_entry.modBaseAddr as usize,
+                module_handle: module_entry.hModule,
+                module_name,
+                module_path: read_null_terminated_string(module_entry.szExePath.as_ptr() as usize).unwrap(),
+            }
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct MemoryEx<'a> {
-    process_name: &'a str,
+    #[warn(dead_code)]
+    pub process_name: &'a str,
     pub process_id: u32,
     pub process_handle: HANDLE,
 }
@@ -37,7 +68,18 @@ impl<'a> MemoryEx<'a> {
         }
     }
 
-    pub fn get_module_info(&self, module_name: &str) -> Result<MODULEENTRY32, MemoryExError>  {
+    pub fn read<T>(&self, base_address: usize) -> Result<T, MemoryExError> {
+        unsafe {
+            let mut buffer: T = std::mem::zeroed::<T>();
+            let ok = ReadProcessMemory(self.process_handle, base_address as LPCVOID, &mut buffer as *mut _ as LPVOID, size_of::<LPVOID>() as SIZE_T, std::ptr::null_mut::<SIZE_T>());
+            if ok == FALSE {
+                return Err(MemoryExError::ReadProcessMemoryFailed);
+            }
+            Ok(buffer)
+        }
+    }
+
+    pub fn get_module_info(&self, module_name: &str) -> Result<ModuleEx, MemoryExError>  {
         unsafe {
             let snap_handle = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, self.process_id);
             if snap_handle == INVALID_HANDLE_VALUE {
@@ -47,7 +89,7 @@ impl<'a> MemoryEx<'a> {
             module_entry.dwSize = size_of::<MODULEENTRY32>() as u32;
             if Module32First(snap_handle, &mut module_entry) == TRUE {
                 if read_null_terminated_string(module_entry.szModule.as_ptr() as usize).unwrap() == module_name {
-                    return Ok(module_entry);
+                    return Ok(ModuleEx::from_module_entry(&module_entry, module_name.into()));
                 }
                 loop {
                     if Module32Next(snap_handle, &mut module_entry) == FALSE {
@@ -56,12 +98,18 @@ impl<'a> MemoryEx<'a> {
                         }
                     }
                     if read_null_terminated_string(module_entry.szModule.as_ptr() as usize).unwrap() == module_name {
-                        return Ok(module_entry);
+                        return Ok(ModuleEx::from_module_entry(&module_entry, module_name.into()));
+
                     }
                 }
             }
             Err(MemoryExError::ModuleNotFound)
         }
+    }
+
+    pub fn get_module_base(&self, module_name: &str) -> Result<usize, MemoryExError> {
+        let info: ModuleEx = self.get_module_info(module_name)?;
+        Ok(info.module_base_address)
     }
 }
 
@@ -119,6 +167,6 @@ fn test_get_process_handle() {
 fn test_get_module_info() {
     let memex = MemoryEx::from_process_name("csgo.exe");
     let module_info = memex.get_module_info("client.dll").unwrap();
-    assert_ne!(module_info.hModule as usize, 0x0);
+    assert_ne!(module_info.module_name, "client.dll");
 
 }
