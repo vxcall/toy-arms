@@ -63,7 +63,7 @@ fn make_lpcstr(text: &str) -> *const i8 {
     format!("{}{}", text, "\0").as_ptr() as *const i8
 }
 
-pub unsafe fn read_null_terminated_string(base_address: usize) -> Result<String, Utf8Error> {
+pub(crate) unsafe fn read_null_terminated_string(base_address: usize) -> Result<String, Utf8Error> {
     let mut name: Vec<u8> = Vec::new();
     let mut i: isize = 0;
     loop {

@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use winapi::shared::minwindef::{BYTE, FALSE, HMODULE, LPCVOID, LPVOID, TRUE};
+use winapi::shared::minwindef::{FALSE, HMODULE, LPCVOID, LPVOID, TRUE};
 use winapi::um::handleapi::{CloseHandle, INVALID_HANDLE_VALUE};
 use winapi::um::processthreadsapi::OpenProcess;
 use winapi::um::tlhelp32::{CreateToolhelp32Snapshot, Module32First, Module32Next, MODULEENTRY32, Process32First, Process32Next, PROCESSENTRY32, TH32CS_SNAPMODULE, TH32CS_SNAPMODULE32, TH32CS_SNAPPROCESS};
@@ -10,7 +10,7 @@ use std::mem::size_of;
 use crate::read_null_terminated_string;
 use thiserror::Error;
 use winapi::shared::basetsd::SIZE_T;
-use winapi::um::memoryapi::ReadProcessMemory;
+use winapi::um::memoryapi::{ReadProcessMemory, WriteProcessMemory};
 
 #[derive(Error, Debug)]
 pub enum MemoryExError {
@@ -24,6 +24,8 @@ pub enum MemoryExError {
     ModuleNotFound,
     #[error("ReadProcessMemory failed")]
     ReadProcessMemoryFailed,
+    #[error("WriteProcessMemory failed")]
+    WriteProcessMemoryFailed,
 }
 
 #[derive(Debug)]
@@ -77,6 +79,17 @@ impl<'a> MemoryEx<'a> {
             }
             Ok(buffer)
         }
+    }
+
+    pub fn write<T>(&self, base_address: usize, value: &mut T) -> Result<(), MemoryExError> {
+        unsafe {
+            let ok = WriteProcessMemory(self.process_handle, base_address as LPVOID, value as *mut T as LPCVOID, size_of::<LPCVOID>() as SIZE_T, std::ptr::null_mut::<SIZE_T>());
+            if ok == FALSE {
+                println!("{}", GetLastError());
+                return Err(MemoryExError::WriteProcessMemoryFailed);
+            }
+        }
+        Ok(())
     }
 
     pub fn get_module_info(&self, module_name: &str) -> Result<ModuleEx, MemoryExError>  {
