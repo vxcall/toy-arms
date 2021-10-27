@@ -6,6 +6,7 @@ use winapi::um::tlhelp32::{CreateToolhelp32Snapshot, Module32First, Module32Next
 use winapi::um::winnt::{HANDLE, PROCESS_ALL_ACCESS};
 use winapi::um::errhandlingapi::GetLastError;
 
+use std::ptr::null_mut;
 use std::mem::size_of;
 use crate::read_null_terminated_string;
 use thiserror::Error;
@@ -73,7 +74,7 @@ impl<'a> MemoryEx<'a> {
     pub fn read<T>(&self, base_address: usize) -> Result<T, MemoryExError> {
         unsafe {
             let mut buffer: T = std::mem::zeroed::<T>();
-            let ok = ReadProcessMemory(self.process_handle, base_address as LPCVOID, &mut buffer as *mut _ as LPVOID, size_of::<LPVOID>() as SIZE_T, std::ptr::null_mut::<SIZE_T>());
+            let ok = ReadProcessMemory(self.process_handle, base_address as LPCVOID, &mut buffer as *mut _ as LPVOID, size_of::<LPVOID>() as SIZE_T, null_mut::<SIZE_T>());
             if ok == FALSE {
                 return Err(MemoryExError::ReadProcessMemoryFailed);
             }
@@ -83,7 +84,7 @@ impl<'a> MemoryEx<'a> {
 
     pub fn write<T>(&self, base_address: usize, value: &mut T) -> Result<(), MemoryExError> {
         unsafe {
-            let ok = WriteProcessMemory(self.process_handle, base_address as LPVOID, value as *mut T as LPCVOID, size_of::<LPCVOID>() as SIZE_T, std::ptr::null_mut::<SIZE_T>());
+            let ok = WriteProcessMemory(self.process_handle, base_address as LPVOID, value as *mut T as LPCVOID, size_of::<LPCVOID>() as SIZE_T, null_mut::<SIZE_T>());
             if ok == FALSE {
                 println!("{}", GetLastError());
                 return Err(MemoryExError::WriteProcessMemoryFailed);

@@ -14,7 +14,7 @@ Include toy-arms in your dependencies table in `Cargo.toml`.
 toy-arms = "0.6.1"
 ```
 
-# :fire: Practical examples
+# :fire: minimal examples
 ## internal
 With this crate, making dll is simple as this:
 
@@ -41,7 +41,7 @@ Since this one shows some example usage of the crate's features, it looks a bit 
 use toy_arms::{MemoryEx, VirtualKeyCode};
 
 fn main() {
-    // This const has to be up to date.
+    // This offset has to be up to date.
     const DW_FORCE_ATTACK: usize = 0x31EDB20;
     // Getting process information
     let memex = MemoryEx::from_process_name("csgo.exe");
@@ -69,8 +69,13 @@ fn main() {
 ```
 
 # :globe_with_meridians: Other examples?
-Take a look at examples directory, you'll see more examples!
-To run the example:
+Take a look at [examples directory](https://github.com/s3pt3mb3r/toy-arms/tree/master/examples), you'll see more examples!
+
+However, you may need to update offsets which some examples contain with your own hands.
+
+Refer to [hazedumper](https://github.com/frk1/hazedumper/blob/master/csgo.hpp) as always for latest offsets of CSGO.
+
+To build examples to x86 arch:
 ```shell
-cargo build --example EXAMPLE_NAME
+cargo build --example EXAMPLE_NAME --target i686-pc-windows-msvc
 ```

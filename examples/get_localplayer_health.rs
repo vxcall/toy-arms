@@ -16,12 +16,15 @@ impl LocalPlayer {
     }
 }
 
+// This offset has to be up to date.
+const DW_LOCAL_PLAYER: i32 = 0xDA545C;
+
 fn hack_main_thread() {
-    let memory = Memory::from_module("client.dll");
+    let memory = Memory::from_module_name("client.dll");
     unsafe {
         //let dw_local_player = memory.read_mut::<LocalPlayer>(0xDA244C);
         loop {
-            if let Some(i) = LocalPlayer::from_raw(memory.read_mut(0xDa244c)) {
+            if let Some(i) = LocalPlayer::from_raw(memory.read_mut(DW_LOCAL_PLAYER)) {
                 println!("health = {:?}", (*i).get_health());
             };
             if toy_arms::detect_keydown(VirtualKeyCode::VK_INSERT) {
