@@ -15,7 +15,10 @@ pub struct Memory<'a> {
 
 impl<'a> Memory<'a> {
     pub fn from_module_name(module_name: &'a str) -> Self {
-            let module_handle = get_module_handle(module_name);
+            let mut module_handle:HMODULE = 0 as HMODULE;
+            while module_handle == 0 as HMODULE{
+                module_handle = get_module_handle(module_name);
+            }
         unsafe {
             let mut module_info: MODULEINFO = zeroed::<MODULEINFO>();
             GetModuleInformation(GetCurrentProcess(), module_handle, &mut module_info, size_of::<MODULEINFO>() as u32);
@@ -43,7 +46,7 @@ impl<'a> Memory<'a> {
 
     }
 
-    pub unsafe fn signature_scan(&self, pattern: &[u8], _offset: i32, _extra: i32) {
+    pub unsafe fn signature_scan(&self, pattern: &[u8], _offset: i32, _extra: i32) -> Option<*mut u8> {
         let right_most_wildcard_index = match get_right_most_wildcard(pattern){
             Some(i) => i,
             None => pattern.len()
@@ -52,19 +55,17 @@ impl<'a> Memory<'a> {
 
         let base = self.module_base_address as *mut u8;
         let end = self.module_base_address + self.module_size as usize;
-        let mut current = (base as *const u8).offset(pattern.len() as isize - 1 as isize);
+        let mut current = (base as *mut u8).offset(pattern.len() as isize - 1 as isize);
 
-        let mut flag = false;
-        println!("start");
+        let mut found = false;
         while (current as usize) < end {
             for (i, p) in pattern.iter().rev().enumerate() {
                 // if pattern == current or pattern == ?, then
                 if *p == b'\x3F' || *p == *current {
-                    if p == &pattern[0] {
+                    if *p == pattern[0] {
                         // This is fired when the pattern is found.
-                        println!("pattern found");
-                        flag = true;
-                        break;
+                        found = true;
+                        return Some(current);
                     }
                     current = current.offset(-1);
                 } else {
@@ -75,10 +76,11 @@ impl<'a> Memory<'a> {
                     break;
                 }
             }
-            if flag {
+            if found {
                 break;
             }
         }
+        None
     }
 }
 

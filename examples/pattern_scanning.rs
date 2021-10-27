@@ -4,8 +4,8 @@ toy_arms::create_entrypoint!(hack_main_thread);
 fn hack_main_thread() {
     let memory = Memory::from_module_name("client.dll");
     unsafe {
-        let pattern = b"\xA0\x35\x05\x84\xB5\x14";
-        memory.signature_scan(pattern, 0, 0);
+        let pattern = b"\x85\xC9\x74\x1A??\x24\xBC???\x04\x75";
+        println!("pattern found: {:p}", memory.signature_scan(pattern, 0, 0).unwrap());
     }
     loop {
         // To exit this hack loop when you input INSEERT KEY
