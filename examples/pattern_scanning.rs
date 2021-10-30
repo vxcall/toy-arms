@@ -1,10 +1,11 @@
-use toy_arms::{detect_keydown, get_module_function_address, get_module_handle, HMODULE, Memory, VirtualKeyCode};
+use toy_arms::{detect_keydown, Memory, VirtualKeyCode};
 toy_arms::create_entrypoint!(hack_main_thread);
 
 fn hack_main_thread() {
     let memory = Memory::from_module_name("client.dll");
     unsafe {
-        let pattern = b"\x85\xC9\x74\x1A??\x24\xBC???\x04\x75";
+            //let pattern = "46 83 ? 04 ? 44 ? 14 ? ? 45 FF";
+        let pattern = "55 8B ? 83 ? F8 ? EC ? ? 00 00";
         println!("pattern found: {:p}", memory.signature_scan(pattern, 0, 0).unwrap());
     }
     loop {
