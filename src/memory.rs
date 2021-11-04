@@ -1,10 +1,11 @@
 use std::str::Utf8Error;
 use winapi::shared::minwindef::HMODULE;
 use winapi::um::psapi::{GetModuleInformation, MODULEINFO};
-use crate::{get_module_handle, read_null_terminated_string, signature_scan_core};
+use crate::{get_module_handle, read_null_terminated_string};
 use crate::cast;
 use std::mem::{size_of, zeroed};
 use winapi::um::processthreadsapi::GetCurrentProcess;
+use crate::pattern_scan_core::pattern_scan_core;
 
 pub struct Memory<'a> {
     pub module_name: &'a str,
@@ -44,7 +45,7 @@ impl<'a> Memory<'a> {
 
     }
 
-    pub fn signature_scan(&self, pattern: &str, _offset: i32, _extra: i32) -> Option<*mut u8> {
+    pub fn pattern_scan(&self, pattern: &str, offset: isize, extra: usize) -> Option<usize> {
         let p_array = pattern.split(" ").collect::<Vec<&str>>();
         let mut pattern_vec: Vec<u8> = Vec::new();
         for p in p_array {
@@ -58,7 +59,9 @@ impl<'a> Memory<'a> {
         let base = self.module_base_address as *mut u8;
         let end = self.module_base_address + self.module_size as usize;
         unsafe {
-            signature_scan_core(base, end, pattern_b, 0, 0)
+            let address = pattern_scan_core(base, end, pattern_b)?;
+            // calculate relative address
+            Some(*(address.offset(offset) as *mut usize) - base as usize + extra)
         }
     }
 }

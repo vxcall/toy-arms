@@ -3,13 +3,11 @@ toy_arms::create_entrypoint!(hack_main_thread);
 
 fn hack_main_thread() {
     let memory = Memory::from_module_name("client.dll");
-    unsafe {
-        //    let pattern = "46 83 ? 04 ? 44 ? 14 ? ? 45 FF";
-        let pattern = "8D 34 85 ? ? ? ? 89 15 ? ? ? ? 8B 41 08 8B 48 04 83 F9 FF";
-        match memory.signature_scan(pattern, 0, 0) {
-            Some(i) => println!("Pattern found {:p}", i),
-            None => println!("Pattern not found")
-        }
+    //    let pattern = "46 83 ? 04 ? 44 ? 14 ? ? 45 FF";
+    let pattern = "89 0D ? ? ? ? 8B 0D ? ? ? ? 8B F2 8B C1 83 CE 04";
+    match memory.pattern_scan(pattern, 2, 0) {
+        Some(i) => println!("Pattern found {:x}", i),
+        None => println!("Pattern not found")
     }
     loop {
         // To exit this hack loop when you input INSEERT KEY
