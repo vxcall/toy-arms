@@ -99,6 +99,7 @@ pub(crate) unsafe fn signature_scan_core(base: *mut u8, end: usize, pattern: &[u
                     return Some(current);
                 }
                 current = current.offset(-1);
+            // if pattern != current
             } else {
                 let movement_num = if let Some(i) = bmt.get(&*current) {
                     i.clone()
@@ -115,9 +116,15 @@ fn build_bad_match_table(pattern: &[u8], right_most_wildcard_index: usize) -> Ha
     let mut bad_match_table = HashMap::new();
     let pattern_length = pattern.len();
     for (i, p) in pattern.iter().enumerate() {
-        let table_value = (pattern_length as isize - i as isize - 1) as usize;
+        let table_value = (pattern_length as isize - i as isize - 2) as usize;
         // if right_most_wildcard_index is pattern.len(), it's gonna be classified to else block anytime.
-        let table_value = if table_value > right_most_wildcard_index { right_most_wildcard_index + 1 } else { table_value };
+        let table_value = if table_value > right_most_wildcard_index {
+            right_most_wildcard_index + 1
+        } else if table_value < 1 {
+            1
+        } else {
+            table_value
+        };
         bad_match_table.insert(p, table_value);
     }
     bad_match_table

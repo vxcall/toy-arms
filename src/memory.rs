@@ -55,9 +55,6 @@ impl<'a> Memory<'a> {
             pattern_vec.push(u8::from_str_radix(p, 16).unwrap());
         }
         let pattern_b = pattern_vec.as_slice();
-        if pattern_b == b"\x46\x83\xF8\x04\x89\x44\x24\x14\x0F\x8C\x45\xFF" {
-            println!("SAME");
-        }
         let base = self.module_base_address as *mut u8;
         let end = self.module_base_address + self.module_size as usize;
         unsafe {
