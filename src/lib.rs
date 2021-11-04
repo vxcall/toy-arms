@@ -12,7 +12,6 @@ mod memory_ex;
 #[doc(inline)]
 pub use memory_ex::*;
 
-
 mod pattern_scan_core;
 
 mod utils;

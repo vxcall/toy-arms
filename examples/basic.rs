@@ -1,3 +1,9 @@
+/*
+This is the demonstration of how to use internal analysis feature in toy-arms.
+This code gets module handle and function address of the func called MessageBoxA as an example.
+Then read the value called dwForceAttack and overwrite it to make player shoot.
+The offset DW_FORCE_ATTACK works as of the day i wrote this but it might not be up to date in your case.
+*/
 use toy_arms::{detect_keydown, get_module_function_address, get_module_handle, HMODULE, Memory, VirtualKeyCode};
 use toy_arms::cast;
 
@@ -8,10 +14,7 @@ const DW_FORCE_ATTACK: usize = 0x31EFCB4;
 
 fn hack_main_thread() {
     // Gets module handle
-    let mut module_handle: HMODULE = 0 as HMODULE;
-    while module_handle == 0 as HMODULE {
-        module_handle = get_module_handle("client.dll");
-    };
+    let module_handle: HMODULE = get_module_handle("client.dll");
     println!("module handle = {:?}", module_handle as usize);
 
     unsafe {
