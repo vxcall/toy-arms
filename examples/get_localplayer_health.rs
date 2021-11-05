@@ -4,7 +4,7 @@ Make sure that you inject this image to csgo.exe.
 also, the offset of DW_LOCAL_PLAYER works as of the day i wrote this but it might not be up to date in your case.
 */
 use toy_arms::{create_entrypoint, cast, VirtualKeyCode};
-use toy_arms::Memory;
+use toy_arms::Module;
 use toy_arms_derive::GameObject;
 use toy_arms::GameObject;
 
@@ -25,7 +25,7 @@ impl LocalPlayer {
 const DW_LOCAL_PLAYER: i32 = 0xDA545C;
 
 fn hack_main_thread() {
-    let memory = Memory::from_module_name("client.dll");
+    let memory = Module::from_module_name("client.dll");
     unsafe {
         //let dw_local_player = memory.read_mut::<LocalPlayer>(0xDA244C);
         loop {

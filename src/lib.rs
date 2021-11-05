@@ -4,13 +4,13 @@ mod keyboard;
 #[doc(inline)]
 pub use keyboard::*;
 
-mod memory;
+mod internal;
 #[doc(inline)]
-pub use memory::*;
+pub use internal::*;
 
-mod memory_ex;
+mod external;
 #[doc(inline)]
-pub use memory_ex::*;
+pub use external::*;
 
 mod pattern_scan_core;
 

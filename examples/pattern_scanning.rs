@@ -4,11 +4,11 @@ Make sure you inject this image to csgo.exe.
 The model pattern is for dwForceAttack.
 */
 
-use toy_arms::{detect_keydown, Memory, VirtualKeyCode};
+use toy_arms::{detect_keydown, Module, VirtualKeyCode};
 toy_arms::create_entrypoint!(hack_main_thread);
 
 fn hack_main_thread() {
-    let memory = Memory::from_module_name("client.dll");
+    let memory = Module::from_module_name("client.dll");
     //    let pattern = "46 83 ? 04 ? 44 ? 14 ? ? 45 FF";
     let dw_force_attack_pattern = "89 0D ? ? ? ? 8B 0D ? ? ? ? 8B F2 8B C1 83 CE 04";
     match memory.pattern_scan(dw_force_attack_pattern, 2, 0) {

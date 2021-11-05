@@ -29,7 +29,7 @@ name = "simplest_dll"
 crate-type = ["cdylib"]
 
 [[example]]
-name = "basic"
+name = "internal"
 crate-type = ["cdylib"]
 
 [[example]]
