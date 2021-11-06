@@ -31,6 +31,7 @@ pub(crate) unsafe fn pattern_scan_core(base: *mut u8, end: usize, pattern: &[u8]
     None
 }
 
+// build_bad_match_table returns the Hashmap that holds each byte and the corresponding number of how many bytes to skip.
 fn build_bad_match_table(pattern: &[u8], right_most_wildcard_index: usize) -> HashMap<&u8, usize> {
     let mut bad_match_table = HashMap::new();
     let pattern_length = pattern.len();

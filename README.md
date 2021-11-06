@@ -1,6 +1,5 @@
 <div align="center">
 
-
 # :alembic: toy-arms
 Windows game hack helper utilities in rust.
 This crate has some useful macros, functions and traits.
@@ -12,13 +11,18 @@ This crate has some useful macros, functions and traits.
 
 </div>
 
-# Usage
+# What's toy-arms?
+This is a toolkit for those who are fed up with coding game hack with C++ but still wanna make it in elegant way.
+Since this wraps many functions which frequently used, you can build hack without having to struggle with Windows-API.
+By using this, many part of your stress while coding low level fashion won't come in.
+
+# Get started
 
 Include toy-arms in your dependencies table in `Cargo.toml`.
 
 ```toml
 [dependencies]
-toy-arms = "0.7.1"
+toy-arms = "0.7.3"
 ```
 
 # :fire: minimal examples

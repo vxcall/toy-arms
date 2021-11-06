@@ -1,6 +1,6 @@
 [package]
 name = "toy-arms"
-version = "0.7.1"
+version = "0.7.3"
 edition = "2018"
 authors = ["s3pt3mb3r <s3pt3mb3r@protonmail.com>"]
 description = "A crates designed to ease game hack in rust."
@@ -35,3 +35,7 @@ crate-type = ["cdylib"]
 [[example]]
 name = "pattern_scanning"
 crate-type = ["cdylib"]
+
+[package.metadata.docs.rs]
+default-target = "x86_64-pc-windows-msvc"
+targets = ["aarch64-pc-windows-msvc", "i686-pc-windows-msvc", "x86_64-pc-windows-msvc"]
