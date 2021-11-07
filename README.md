@@ -22,7 +22,7 @@ Include toy-arms in your dependencies table in `Cargo.toml`.
 
 ```toml
 [dependencies]
-toy-arms = "0.7.3"
+toy-arms = "0.7.5"
 ```
 
 # :fire: minimal examples

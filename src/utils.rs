@@ -59,7 +59,7 @@ pub fn get_module_handle(module_name: &str) -> Option<HMODULE> {
             if module_handle != 0 as HMODULE { break }
             module_handle = GetModuleHandleA(make_lpcstr(module_name));
         }
-        if module_handle != 0 as HMODULE {
+        if module_handle == 0 as HMODULE {
             return None
         } else {
             Some(module_handle)

@@ -27,10 +27,10 @@ fn hack_main_thread() {
 
     let shoot_flag = cast!(mut module_handle as usize + DW_FORCE_ATTACK, u8);
     loop {
-    //    unsafe {
-    //        // Auto shoot
-    //        *shoot_flag = 5u8;
-    //    }
+        unsafe {
+            // Auto shoot
+            *shoot_flag = 5u8;
+        }
         // To exit this hack loop when you input INSEERT KEY
         if detect_keydown(VirtualKeyCode::VK_INSERT) {
             break

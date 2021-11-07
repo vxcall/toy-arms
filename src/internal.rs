@@ -17,7 +17,7 @@ pub struct Module<'a> {
 impl<'a> Module<'a> {
     pub fn from_module_name(module_name: &'a str) -> Option<Self> {
         let module_handle: HMODULE = match get_module_handle(module_name) {
-            Some(e) => e ,
+            Some(e) => e,
             None => return None
         };
         unsafe {
@@ -31,7 +31,6 @@ impl<'a> Module<'a> {
                     module_size: module_info.SizeOfImage,
                 }
             )
-
         }
     }
     /// read fetches the value that given address is holding.
