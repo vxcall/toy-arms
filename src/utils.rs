@@ -49,18 +49,32 @@ macro_rules! create_entrypoint {
     };
 }
 
-pub fn get_module_handle(text: &str) -> HMODULE {
+/// get_module_handle returns Option where should contains HMODULE.
+/// This function may fail even if you put a correct dll name somehow, so it tries get handle for 100 times then returns Option
+/// * `text` - name of the module you want
+pub fn get_module_handle(module_name: &str) -> Option<HMODULE> {
     unsafe {
-        let mut module_handle: HMODULE = GetModuleHandleA(make_lpcstr(text));
-        loop {
-            if module_handle != 0 as HMODULE { break module_handle }
-            module_handle = GetModuleHandleA(make_lpcstr(text));
+        let mut module_handle: HMODULE = GetModuleHandleA(make_lpcstr(module_name));
+        for _ in 0..100 {
+            if module_handle != 0 as HMODULE { break }
+            module_handle = GetModuleHandleA(make_lpcstr(module_name));
+        }
+        if module_handle != 0 as HMODULE {
+            return None
+        } else {
+            Some(module_handle)
         }
     }
 }
 
-pub unsafe fn get_module_function_address(module_name: &str, function_name: &str) -> FARPROC {
-    GetProcAddress(get_module_handle(module_name), make_lpcstr(function_name))
+/// * `module_name` - name of module that the desired function is in.
+/// * `function_name` - name of the function you want
+pub unsafe fn get_module_function_address(module_name: &str, function_name: &str) -> Option<FARPROC> {
+    let module_handle = match get_module_handle(module_name) {
+        Some(e) => e,
+        None => return None
+    };
+    Some(GetProcAddress(module_handle, make_lpcstr(function_name)))
 }
 
 fn make_lpcstr(text: &str) -> *const i8 {
