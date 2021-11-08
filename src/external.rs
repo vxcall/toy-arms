@@ -13,6 +13,7 @@ use thiserror::Error;
 use winapi::shared::basetsd::SIZE_T;
 use winapi::um::memoryapi::{ReadProcessMemory, WriteProcessMemory};
 
+#[cfg(feature = "external")]
 #[derive(Error, Debug)]
 pub enum MemoryExError {
     #[error("Taking snapshot FAILED.")]
@@ -29,6 +30,7 @@ pub enum MemoryExError {
     WriteProcessMemoryFailed,
 }
 
+#[cfg(feature = "external")]
 #[derive(Debug)]
 pub struct ModuleEx {
     pub module_size: u32,
@@ -38,6 +40,7 @@ pub struct ModuleEx {
     pub module_path: String,
 }
 
+#[cfg(feature = "external")]
 impl ModuleEx {
     pub fn from_module_entry(module_entry: &MODULEENTRY32, module_name: String) -> Self {
         unsafe {
@@ -52,6 +55,7 @@ impl ModuleEx {
     }
 }
 
+#[cfg(feature = "external")]
 #[derive(Debug)]
 pub struct MemoryEx<'a> {
     #[warn(dead_code)]
@@ -60,6 +64,7 @@ pub struct MemoryEx<'a> {
     pub process_handle: HANDLE,
 }
 
+#[cfg(feature = "external")]
 impl<'a> MemoryEx<'a> {
     pub fn from_process_name(process_name: &'a str) -> Self {
         let process_id = get_process_id(process_name).unwrap();

@@ -1,6 +1,6 @@
 [package]
 name = "toy-arms"
-version = "0.7.5"
+version = "0.8.0"
 edition = "2018"
 authors = ["s3pt3mb3r <s3pt3mb3r@protonmail.com>"]
 description = "A crates designed to ease game hack in rust."
@@ -16,7 +16,7 @@ toy-arms_derive = {path = "./toy-arms_derive", version = "0.1.1"}
 thiserror = "1.0.29"
 
 [features]
-default = ["internal", "external"]
+default = ["internal"]
 internal = []
 external = []
 

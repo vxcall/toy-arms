@@ -7,6 +7,7 @@ use std::mem::{size_of, zeroed};
 use winapi::um::processthreadsapi::GetCurrentProcess;
 use crate::pattern_scan_core::pattern_scan_core;
 
+#[cfg(feature = "internal")]
 pub struct Module<'a> {
     pub module_name: &'a str,
     pub module_handle: HMODULE,
@@ -14,6 +15,7 @@ pub struct Module<'a> {
     pub module_base_address: usize,
 }
 
+#[cfg(feature = "internal")]
 impl<'a> Module<'a> {
     pub fn from_module_name(module_name: &'a str) -> Option<Self> {
         let module_handle: HMODULE = match get_module_handle(module_name) {
@@ -33,6 +35,7 @@ impl<'a> Module<'a> {
             )
         }
     }
+
     /// read fetches the value that given address is holding.
     /// * `base_address` - the address that is supposed to have the value you want
     pub fn read<T>(&self, address: i32) -> *const T {
@@ -77,4 +80,3 @@ impl<'a> Module<'a> {
         }
     }
 }
-
