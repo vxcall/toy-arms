@@ -13,8 +13,8 @@ use thiserror::Error;
 use winapi::shared::basetsd::SIZE_T;
 use winapi::um::memoryapi::{ReadProcessMemory, WriteProcessMemory};
 
-#[cfg(feature = "external")]
 #[derive(Error, Debug)]
+#[cfg(feature = "external")]
 pub enum MemoryExError {
     #[error("Taking snapshot FAILED.")]
     SnapshotFailed,
@@ -30,8 +30,8 @@ pub enum MemoryExError {
     WriteProcessMemoryFailed,
 }
 
-#[cfg(feature = "external")]
 #[derive(Debug)]
+#[cfg(feature = "external")]
 pub struct ModuleEx {
     pub module_size: u32,
     pub module_base_address: usize,
@@ -78,6 +78,7 @@ impl<'a> MemoryEx<'a> {
 
     /// read fetches the value that given address is holding.
     /// * `base_address` - the address that is supposed to have the value you want
+    #[cfg(feature = "external")]
     pub fn read<T>(&self, base_address: usize) -> Result<T, MemoryExError> {
         unsafe {
             let mut buffer: T = std::mem::zeroed::<T>();
@@ -92,6 +93,7 @@ impl<'a> MemoryEx<'a> {
     /// write overwrites the value that given base_address is holding.
     /// * `base_address` - the address that is supposed have the value you want to tamper with.
     /// * `value` - new value you wanna overwrite
+    #[cfg(feature = "external")]
     pub fn write<T>(&self, base_address: usize, value: &mut T) -> Result<(), MemoryExError> {
         unsafe {
             let ok = WriteProcessMemory(self.process_handle, base_address as LPVOID, value as *mut T as LPCVOID, size_of::<LPCVOID>() as SIZE_T, null_mut::<SIZE_T>());
@@ -103,6 +105,7 @@ impl<'a> MemoryEx<'a> {
         Ok(())
     }
 
+    #[cfg(feature = "external")]
     pub fn get_module_info(&self, module_name: &str) -> Result<ModuleEx, MemoryExError>  {
         unsafe {
             let snap_handle = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, self.process_id);
@@ -131,12 +134,14 @@ impl<'a> MemoryEx<'a> {
         }
     }
 
+    #[cfg(feature = "external")]
     pub fn get_module_base(&self, module_name: &str) -> Result<usize, MemoryExError> {
         let info: ModuleEx = self.get_module_info(module_name)?;
         Ok(info.module_base_address)
     }
 }
 
+#[cfg(feature = "external")]
 fn get_process_id(process_name: &str) -> Result<u32, MemoryExError> {
     unsafe {
         let snap_handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -165,6 +170,7 @@ fn get_process_id(process_name: &str) -> Result<u32, MemoryExError> {
     Err(MemoryExError::ProcessNotFound)
 }
 
+#[cfg(feature = "external")]
 fn get_process_handle(process_id: u32) -> HANDLE {
     unsafe {
         OpenProcess(PROCESS_ALL_ACCESS, FALSE, process_id as u32)

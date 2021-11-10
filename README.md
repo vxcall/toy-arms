@@ -44,6 +44,12 @@ fn hack_main_thread() {
 ```
 
 ## external
+
+```toml
+# You must enable external feature flag
+toy-arms = {version = "0.8.0", features = ["external"]}
+```
+
 On the other hand, following code is how tamper with memory externally is like.
 
 Since this one shows some example usage of the crate's features, it looks a bit fancier.

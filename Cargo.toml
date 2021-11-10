@@ -21,6 +21,10 @@ internal = []
 external = []
 
 [[example]]
+name = "external"
+required-features = ["external"]
+
+[[example]]
 name = "get_localplayer_health"
 crate-type = ["cdylib"]
 
