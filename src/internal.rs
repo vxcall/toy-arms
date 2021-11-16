@@ -105,7 +105,7 @@ impl<'a> Module<'a> {
 /// * `offset` - offset of the address from pattern's base.
 /// * `extra` - offset of the address from dereferenced address.
 #[cfg(feature = "internal")]
-pub fn pattern_scan_all_modules(pattern: &str, offset: isize, extra: usize) -> Result<(usize, String), ToyArmsInternalError> {
+pub fn pattern_scan_all_modules(pattern: &str) -> Result<(usize, String), ToyArmsInternalError> {
     unsafe {
         let all_handles = get_all_module_handles()?;
         let process_handle = GetCurrentProcess();
@@ -119,7 +119,7 @@ pub fn pattern_scan_all_modules(pattern: &str, offset: isize, extra: usize) -> R
                     let mut module_name: [CHAR; 100] = [0; 100];
                     GetModuleBaseNameA(GetCurrentProcess(), handle, &mut module_name as LPSTR, std::mem::size_of_val(&module_name) as u32);
                     let module_name = read_null_terminated_string(&mut module_name as *mut i8 as usize).unwrap();
-                    return Ok((*(e.offset(offset) as *mut usize) - base as usize + extra, module_name));
+                    return Ok((e as usize, module_name));
                 },
                 None => continue,
             }
