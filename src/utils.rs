@@ -67,17 +67,7 @@ pub fn get_module_handle(module_name: &str) -> Option<HMODULE> {
     }
 }
 
-/// * `module_name` - name of module that the desired function is in.
-/// * `function_name` - name of the function you want
-pub unsafe fn get_module_function_address(module_name: &str, function_name: &str) -> Option<FARPROC> {
-    let module_handle = match get_module_handle(module_name) {
-        Some(e) => e,
-        None => return None
-    };
-    Some(GetProcAddress(module_handle, make_lpcstr(function_name)))
-}
-
-fn make_lpcstr(text: &str) -> *const i8 {
+pub(crate) fn make_lpcstr(text: &str) -> *const i8 {
     format!("{}{}", text, "\0").as_ptr() as *const i8
 }
 

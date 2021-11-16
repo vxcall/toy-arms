@@ -15,7 +15,7 @@ use winapi::um::memoryapi::{ReadProcessMemory, WriteProcessMemory};
 
 #[derive(Error, Debug)]
 #[cfg(feature = "external")]
-pub enum MemoryExError {
+pub enum ToyArmsExternalError {
     #[error("Taking snapshot FAILED.")]
     SnapshotFailed,
     #[error("No more files")]
@@ -79,12 +79,12 @@ impl<'a> MemoryEx<'a> {
     /// read fetches the value that given address is holding.
     /// * `base_address` - the address that is supposed to have the value you want
     #[cfg(feature = "external")]
-    pub fn read<T>(&self, base_address: usize) -> Result<T, MemoryExError> {
+    pub fn read<T>(&self, base_address: usize) -> Result<T, ToyArmsExternalError> {
         unsafe {
             let mut buffer: T = std::mem::zeroed::<T>();
             let ok = ReadProcessMemory(self.process_handle, base_address as LPCVOID, &mut buffer as *mut _ as LPVOID, size_of::<LPVOID>() as SIZE_T, null_mut::<SIZE_T>());
             if ok == FALSE {
-                return Err(MemoryExError::ReadProcessMemoryFailed);
+                return Err(ToyArmsExternalError::ReadProcessMemoryFailed);
             }
             Ok(buffer)
         }
@@ -94,23 +94,23 @@ impl<'a> MemoryEx<'a> {
     /// * `base_address` - the address that is supposed have the value you want to tamper with.
     /// * `value` - new value you wanna overwrite
     #[cfg(feature = "external")]
-    pub fn write<T>(&self, base_address: usize, value: &mut T) -> Result<(), MemoryExError> {
+    pub fn write<T>(&self, base_address: usize, value: &mut T) -> Result<(), ToyArmsExternalError> {
         unsafe {
             let ok = WriteProcessMemory(self.process_handle, base_address as LPVOID, value as *mut T as LPCVOID, size_of::<LPCVOID>() as SIZE_T, null_mut::<SIZE_T>());
             if ok == FALSE {
                 println!("{}", GetLastError());
-                return Err(MemoryExError::WriteProcessMemoryFailed);
+                return Err(ToyArmsExternalError::WriteProcessMemoryFailed);
             }
         }
         Ok(())
     }
 
     #[cfg(feature = "external")]
-    pub fn get_module_info(&self, module_name: &str) -> Result<ModuleEx, MemoryExError>  {
+    pub fn get_module_info(&self, module_name: &str) -> Result<ModuleEx, ToyArmsExternalError>  {
         unsafe {
             let snap_handle = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, self.process_id);
             if snap_handle == INVALID_HANDLE_VALUE {
-                return Err(MemoryExError::SnapshotFailed);
+                return Err(ToyArmsExternalError::SnapshotFailed);
             }
             let mut module_entry: MODULEENTRY32 = MODULEENTRY32::default();
             module_entry.dwSize = size_of::<MODULEENTRY32>() as u32;
@@ -121,7 +121,7 @@ impl<'a> MemoryEx<'a> {
                 loop {
                     if Module32Next(snap_handle, &mut module_entry) == FALSE {
                         if GetLastError() == 18 {
-                            return Err(MemoryExError::NoMoreFiles);
+                            return Err(ToyArmsExternalError::NoMoreFiles);
                         }
                     }
                     if read_null_terminated_string(module_entry.szModule.as_ptr() as usize).unwrap() == module_name {
@@ -130,23 +130,23 @@ impl<'a> MemoryEx<'a> {
                     }
                 }
             }
-            Err(MemoryExError::ModuleNotFound)
+            Err(ToyArmsExternalError::ModuleNotFound)
         }
     }
 
     #[cfg(feature = "external")]
-    pub fn get_module_base(&self, module_name: &str) -> Result<usize, MemoryExError> {
+    pub fn get_module_base(&self, module_name: &str) -> Result<usize, ToyArmsExternalError> {
         let info: ModuleEx = self.get_module_info(module_name)?;
         Ok(info.module_base_address)
     }
 }
 
 #[cfg(feature = "external")]
-fn get_process_id(process_name: &str) -> Result<u32, MemoryExError> {
+fn get_process_id(process_name: &str) -> Result<u32, ToyArmsExternalError> {
     unsafe {
         let snap_handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
         if snap_handle == INVALID_HANDLE_VALUE {
-            return Err(MemoryExError::SnapshotFailed);
+            return Err(ToyArmsExternalError::SnapshotFailed);
         }
         let mut proc_entry: PROCESSENTRY32 = PROCESSENTRY32::default();
         proc_entry.dwSize = size_of::<PROCESSENTRY32>() as u32;
@@ -157,7 +157,7 @@ fn get_process_id(process_name: &str) -> Result<u32, MemoryExError> {
             loop {
                 if Process32Next(snap_handle, &mut proc_entry) == FALSE {
                     if GetLastError() == 18 {
-                        return Err(MemoryExError::NoMoreFiles);
+                        return Err(ToyArmsExternalError::NoMoreFiles);
                     }
                 }
                 if read_null_terminated_string(proc_entry.szExeFile.as_ptr() as usize).unwrap() == process_name {
@@ -167,7 +167,7 @@ fn get_process_id(process_name: &str) -> Result<u32, MemoryExError> {
         }
         CloseHandle(snap_handle);
     }
-    Err(MemoryExError::ProcessNotFound)
+    Err(ToyArmsExternalError::ProcessNotFound)
 }
 
 #[cfg(feature = "external")]
