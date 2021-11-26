@@ -1,3 +1,4 @@
+use std::mem::size_of_val;
 use std::str::Utf8Error;
 use winapi::shared::minwindef::{DWORD, HMODULE};
 use winapi::um::psapi::{EnumProcessModules, GetModuleBaseNameA, GetModuleInformation, MODULEINFO};
@@ -7,7 +8,6 @@ use std::mem::{size_of, zeroed};
 use winapi::um::processthreadsapi::GetCurrentProcess;
 use crate::pattern_scan_core::boyer_moore_horspool;
 use thiserror::Error;
-use winapi::um::libloaderapi::GetModuleFileNameA;
 use winapi::um::winnt::{CHAR, LPSTR};
 
 #[derive(Error, Debug)]
@@ -16,7 +16,7 @@ pub enum ToyArmsInternalError {
     #[error("get_all_module_handles failed")]
     GetAllModuleHandlesFailed,
     #[error("pattern_scan_all_modules failed")]
-    PatternScanALlModulesFailed,
+    PatternScanALLModulesFailed,
 }
 
 #[cfg(feature = "internal")]
@@ -78,7 +78,7 @@ impl<'a> Module<'a> {
         let base = self.module_base_address as *mut u8;
         let end = self.module_base_address + self.module_size as usize;
         unsafe {
-            return match boyer_moore_horspool(base, end, pattern) {
+            return match boyer_moore_horspool(pattern, base, end) {
                 Some(e) => Some(e as usize),
                 None => None
             }
@@ -105,28 +105,35 @@ impl<'a> Module<'a> {
 /// * `offset` - offset of the address from pattern's base.
 /// * `extra` - offset of the address from dereferenced address.
 #[cfg(feature = "internal")]
-pub fn pattern_scan_all_modules(pattern: &str) -> Result<(usize, String), ToyArmsInternalError> {
+pub fn pattern_scan_all_modules(pattern: &str) -> Option<(usize, String)> {
     unsafe {
-        let all_handles = get_all_module_handles()?;
+        let all_handles = get_all_module_handles().ok()?;
         let process_handle = GetCurrentProcess();
         for handle in all_handles {
             let mut module_info: MODULEINFO = std::mem::zeroed::<MODULEINFO>();
             GetModuleInformation(process_handle, handle, &mut module_info, size_of::<MODULEINFO>() as u32);
             let base = module_info.lpBaseOfDll as *mut u8;
             let end = module_info.lpBaseOfDll as usize + module_info.SizeOfImage as usize;
-            match boyer_moore_horspool(base, end, pattern) {
+            match boyer_moore_horspool(pattern, base, end) {
                 Some(e) => {
                     let mut module_name: [CHAR; 100] = [0; 100];
                     GetModuleBaseNameA(GetCurrentProcess(), handle, &mut module_name as LPSTR, std::mem::size_of_val(&module_name) as u32);
                     let module_name = read_null_terminated_string(&mut module_name as *mut i8 as usize).unwrap();
-                    return Ok((e as usize, module_name));
+                    return Some((e as usize, module_name));
                 },
                 None => continue,
             }
         }
-        Err(ToyArmsInternalError::PatternScanALlModulesFailed)
+        None
     }
 }
+
+pub fn pattern_scan_specific_range(pattern: &str, start: usize, end: usize) -> Option<*mut u8> {
+    unsafe {
+        boyer_moore_horspool(pattern, start as *mut u8, end)
+    }
+}
+
 
 /// * `module_name` - name of module that the desired function is in.
 /// * `function_name` - name of the function you want
@@ -142,20 +149,23 @@ pub unsafe fn get_module_function_address(module_name: &str, function_name: &str
 #[cfg(feature = "internal")]
 fn get_all_module_handles() -> Result<Vec<HMODULE>, ToyArmsInternalError> {
     unsafe {
-        // Buffer size is 300 * sizeof(HMODULE)
-        let mut module_handles: [HMODULE; 300] = [0 as HMODULE; 300];
-        // Make a buffer for required_size[out] by zero initializing the DWORD space.
-        let mut required_size = std::mem::zeroed::<DWORD>();
-        // The last parameter is implicitly: &mut required_size as *mut DWORD
-        if EnumProcessModules(GetCurrentProcess(), module_handles.as_mut_ptr(), std::mem::size_of_val(&module_handles) as u32, &mut required_size) != 0 {
-            let number_of_handles = required_size as usize / std::mem::size_of::<HMODULE>();
-            // If buffer is smaller than required, call EnumProcessModules with bigger buffer.
-            if 300 * std::mem::size_of::<HMODULE>() < number_of_handles {
-                println!("Buffer is smaller than required size.");
+        for size_indice in 3..=10 {
+            // Buffer size is size_indice * sizeof(HMODULE) * 100
+            let mut module_handles = vec![0 as HMODULE; size_indice * 100];
+            // Make a buffer for required_size[out] by zero initializing the DWORD space.
+            let mut required_size = std::mem::zeroed::<DWORD>();
+            // The last parameter is implicitly: &mut required_size as *mut DWORD
+            return if EnumProcessModules(GetCurrentProcess(), module_handles.as_mut_ptr(), (module_handles.len() * size_of::<HMODULE>()) as u32, &mut required_size) != 0 {
+                let number_of_handles = required_size as usize / std::mem::size_of::<HMODULE>();
+                // If buffer is smaller than required, loop to call EnumProcessModules with bigger buffer.
+                if  size_indice * 100 < number_of_handles {
+                    continue;
+                }
+                Ok(module_handles.iter().filter(|e| { **e != 0 as HMODULE }).map(|e| { e.clone() }).collect::<Vec<HMODULE>>())
+            } else {
+                Err(ToyArmsInternalError::GetAllModuleHandlesFailed)
             }
-            Ok(module_handles.iter().filter( |e| {**e != 0 as HMODULE}).map(|e| { e.clone() }).collect::<Vec<HMODULE>>())
-        } else {
-            return Err(ToyArmsInternalError::GetAllModuleHandlesFailed);
         }
+        Err(ToyArmsInternalError::GetAllModuleHandlesFailed)
     }
 }

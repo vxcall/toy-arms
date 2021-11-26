@@ -1,9 +1,11 @@
+//! pattern_scan_core consists of base algorithm of pattern scanning. All pattern scan function just wraps following codes.
+
 use std::collections::HashMap;
 use winapi::shared::minwindef::LPVOID;
 use winapi::um::memoryapi::VirtualQuery;
 use winapi::um::winnt::{MEM_COMMIT, MEMORY_BASIC_INFORMATION, PAGE_NOACCESS};
 
-pub(crate) unsafe fn boyer_moore_horspool(base: *mut u8, end: usize, pattern: &str) -> Option<*mut u8> {
+pub(crate) unsafe fn boyer_moore_horspool(pattern: &str, start: *mut u8, end: usize) -> Option<*mut u8> {
     let pattern_vec = process_pattern_from_str(pattern);
     let pattern = pattern_vec.as_slice();
 
@@ -14,9 +16,8 @@ pub(crate) unsafe fn boyer_moore_horspool(base: *mut u8, end: usize, pattern: &s
 
     let bmt = build_bad_match_table(pattern, right_most_wildcard_index);
 
-    let mut current = (base as *mut u8).offset(pattern.len() as isize - 1 as isize);
+    let mut current = (start as *mut u8).offset(pattern.len() as isize - 1 as isize);
 
-    // initializing memory_info and next_page_base just in case the first
     let mut memory_info: MEMORY_BASIC_INFORMATION = MEMORY_BASIC_INFORMATION::default();
     let mut next_page_base = 0x0;
 

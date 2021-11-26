@@ -1,3 +1,4 @@
+#![doc(html_logo_url = "https://svgshare.com/i/cF0.svg")]
 
 #[cfg(target_os = "windows")]
 mod keyboard;

@@ -1,5 +1,8 @@
+//! utils contains functions that is used across this entire crate multiple times because of its usefulness.
+
 use std::str::Utf8Error;
 
+#[doc(hidden)]
 pub use winapi::{
     shared::minwindef::{FARPROC, HMODULE},
     shared::minwindef::BOOL, shared::minwindef::HINSTANCE, shared::minwindef::TRUE,
