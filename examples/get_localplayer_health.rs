@@ -3,10 +3,10 @@ This example is the demonstration of getting player health with toy-arms interna
 Make sure that you inject this image to csgo.exe.
 also, the offset of DW_LOCAL_PLAYER works as of the day i wrote this but it might not be up to date in your case.
 */
-use toy_arms::{create_entrypoint, cast, VirtualKeyCode};
-use toy_arms::Module;
-use toy_arms_derive::GameObject;
 use toy_arms::GameObject;
+use toy_arms::Module;
+use toy_arms::{cast, create_entrypoint, VirtualKeyCode};
+use toy_arms_derive::GameObject;
 
 create_entrypoint!(hack_main_thread);
 
@@ -37,5 +37,4 @@ fn hack_main_thread() {
             }
         }
     }
-
 }

@@ -1,14 +1,17 @@
 use std::fmt::Debug;
 use winapi::shared::minwindef::{FALSE, HMODULE, LPCVOID, LPVOID, TRUE};
+use winapi::um::errhandlingapi::GetLastError;
 use winapi::um::handleapi::{CloseHandle, INVALID_HANDLE_VALUE};
 use winapi::um::processthreadsapi::OpenProcess;
-use winapi::um::tlhelp32::{CreateToolhelp32Snapshot, Module32First, Module32Next, MODULEENTRY32, Process32First, Process32Next, PROCESSENTRY32, TH32CS_SNAPMODULE, TH32CS_SNAPMODULE32, TH32CS_SNAPPROCESS};
+use winapi::um::tlhelp32::{
+    CreateToolhelp32Snapshot, Module32First, Module32Next, Process32First, Process32Next,
+    MODULEENTRY32, PROCESSENTRY32, TH32CS_SNAPMODULE, TH32CS_SNAPMODULE32, TH32CS_SNAPPROCESS,
+};
 use winapi::um::winnt::{HANDLE, PROCESS_ALL_ACCESS};
-use winapi::um::errhandlingapi::GetLastError;
 
-use std::ptr::null_mut;
-use std::mem::size_of;
 use crate::read_null_terminated_string;
+use std::mem::size_of;
+use std::ptr::null_mut;
 use thiserror::Error;
 use winapi::shared::basetsd::SIZE_T;
 use winapi::um::memoryapi::{ReadProcessMemory, WriteProcessMemory};
@@ -49,7 +52,8 @@ impl ModuleEx {
                 module_base_address: module_entry.modBaseAddr as usize,
                 module_handle: module_entry.hModule,
                 module_name,
-                module_path: read_null_terminated_string(module_entry.szExePath.as_ptr() as usize).unwrap(),
+                module_path: read_null_terminated_string(module_entry.szExePath.as_ptr() as usize)
+                    .unwrap(),
             }
         }
     }
@@ -82,7 +86,13 @@ impl<'a> MemoryEx<'a> {
     pub fn read<T>(&self, base_address: usize) -> Result<T, ToyArmsExternalError> {
         unsafe {
             let mut buffer: T = std::mem::zeroed::<T>();
-            let ok = ReadProcessMemory(self.process_handle, base_address as LPCVOID, &mut buffer as *mut _ as LPVOID, size_of::<LPVOID>() as SIZE_T, null_mut::<SIZE_T>());
+            let ok = ReadProcessMemory(
+                self.process_handle,
+                base_address as LPCVOID,
+                &mut buffer as *mut _ as LPVOID,
+                size_of::<LPVOID>() as SIZE_T,
+                null_mut::<SIZE_T>(),
+            );
             if ok == FALSE {
                 return Err(ToyArmsExternalError::ReadProcessMemoryFailed);
             }
@@ -96,7 +106,13 @@ impl<'a> MemoryEx<'a> {
     #[cfg(feature = "external")]
     pub fn write<T>(&self, base_address: usize, value: &mut T) -> Result<(), ToyArmsExternalError> {
         unsafe {
-            let ok = WriteProcessMemory(self.process_handle, base_address as LPVOID, value as *mut T as LPCVOID, size_of::<LPCVOID>() as SIZE_T, null_mut::<SIZE_T>());
+            let ok = WriteProcessMemory(
+                self.process_handle,
+                base_address as LPVOID,
+                value as *mut T as LPCVOID,
+                size_of::<LPCVOID>() as SIZE_T,
+                null_mut::<SIZE_T>(),
+            );
             if ok == FALSE {
                 println!("{}", GetLastError());
                 return Err(ToyArmsExternalError::WriteProcessMemoryFailed);
@@ -106,17 +122,23 @@ impl<'a> MemoryEx<'a> {
     }
 
     #[cfg(feature = "external")]
-    pub fn get_module_info(&self, module_name: &str) -> Result<ModuleEx, ToyArmsExternalError>  {
+    pub fn get_module_info(&self, module_name: &str) -> Result<ModuleEx, ToyArmsExternalError> {
         unsafe {
-            let snap_handle = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, self.process_id);
+            let snap_handle =
+                CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, self.process_id);
             if snap_handle == INVALID_HANDLE_VALUE {
                 return Err(ToyArmsExternalError::SnapshotFailed);
             }
             let mut module_entry: MODULEENTRY32 = MODULEENTRY32::default();
             module_entry.dwSize = size_of::<MODULEENTRY32>() as u32;
             if Module32First(snap_handle, &mut module_entry) == TRUE {
-                if read_null_terminated_string(module_entry.szModule.as_ptr() as usize).unwrap() == module_name {
-                    return Ok(ModuleEx::from_module_entry(&module_entry, module_name.into()));
+                if read_null_terminated_string(module_entry.szModule.as_ptr() as usize).unwrap()
+                    == module_name
+                {
+                    return Ok(ModuleEx::from_module_entry(
+                        &module_entry,
+                        module_name.into(),
+                    ));
                 }
                 loop {
                     if Module32Next(snap_handle, &mut module_entry) == FALSE {
@@ -124,9 +146,13 @@ impl<'a> MemoryEx<'a> {
                             return Err(ToyArmsExternalError::NoMoreFiles);
                         }
                     }
-                    if read_null_terminated_string(module_entry.szModule.as_ptr() as usize).unwrap() == module_name {
-                        return Ok(ModuleEx::from_module_entry(&module_entry, module_name.into()));
-
+                    if read_null_terminated_string(module_entry.szModule.as_ptr() as usize).unwrap()
+                        == module_name
+                    {
+                        return Ok(ModuleEx::from_module_entry(
+                            &module_entry,
+                            module_name.into(),
+                        ));
                     }
                 }
             }
@@ -151,7 +177,9 @@ fn get_process_id(process_name: &str) -> Result<u32, ToyArmsExternalError> {
         let mut proc_entry: PROCESSENTRY32 = PROCESSENTRY32::default();
         proc_entry.dwSize = size_of::<PROCESSENTRY32>() as u32;
         if Process32First(snap_handle, &mut proc_entry) == 1 {
-            if read_null_terminated_string(proc_entry.szExeFile.as_ptr() as usize).unwrap() == process_name {
+            if read_null_terminated_string(proc_entry.szExeFile.as_ptr() as usize).unwrap()
+                == process_name
+            {
                 return Ok(proc_entry.th32ProcessID as u32);
             }
             loop {
@@ -160,7 +188,9 @@ fn get_process_id(process_name: &str) -> Result<u32, ToyArmsExternalError> {
                         return Err(ToyArmsExternalError::NoMoreFiles);
                     }
                 }
-                if read_null_terminated_string(proc_entry.szExeFile.as_ptr() as usize).unwrap() == process_name {
+                if read_null_terminated_string(proc_entry.szExeFile.as_ptr() as usize).unwrap()
+                    == process_name
+                {
                     return Ok(proc_entry.th32ProcessID as u32);
                 }
             }
@@ -172,9 +202,7 @@ fn get_process_id(process_name: &str) -> Result<u32, ToyArmsExternalError> {
 
 #[cfg(feature = "external")]
 fn get_process_handle(process_id: u32) -> HANDLE {
-    unsafe {
-        OpenProcess(PROCESS_ALL_ACCESS, FALSE, process_id as u32)
-    }
+    unsafe { OpenProcess(PROCESS_ALL_ACCESS, FALSE, process_id as u32) }
 }
 
 #[test]
@@ -198,5 +226,4 @@ fn test_get_module_info() {
     let memex = MemoryEx::from_process_name("csgo.exe");
     let module_info = memex.get_module_info("client.dll").unwrap();
     assert_ne!(module_info.module_name, "client.dll");
-
 }

@@ -4,7 +4,7 @@ Make sure you inject this image to csgo.exe.
 The model pattern is for dwForceAttack.
 */
 
-use toy_arms::{detect_keydown, Module, pattern_scan_all_modules, VirtualKeyCode};
+use toy_arms::{detect_keydown, pattern_scan_all_modules, Module, VirtualKeyCode};
 toy_arms::create_entrypoint!(hack_main_thread);
 
 fn hack_main_thread() {
@@ -13,21 +13,21 @@ fn hack_main_thread() {
 
     match memory.find_pattern(dw_force_attack_pattern) {
         Some(i) => println!("offset: 0x{:x}", i),
-        None => println!("Pattern not found")
+        None => println!("Pattern not found"),
     }
 
     match pattern_scan_all_modules(dw_force_attack_pattern) {
         Some(e) => {
             println!("address: {:x}", e.0);
             println!("module name: {}", e.1);
-        },
-        _ => println!("Not Found")
+        }
+        _ => println!("Not Found"),
     }
 
     loop {
         // To exit this hack loop when you input INSEERT KEY
         if detect_keydown(VirtualKeyCode::VK_INSERT) {
-            break
+            break;
         }
     }
 }
