@@ -13,8 +13,12 @@ pub(crate) unsafe fn boyer_moore_horspool(
     let pattern_vec = process_pattern_from_str(pattern);
     let pattern = pattern_vec.as_slice();
 
-    let right_most_wildcard_index =
-        pattern.len() - pattern.iter().rev().position(|&x| x == b'\x3F')?;
+    let right_most_wildcard_index = pattern.len()
+        - if let Some(x) = pattern.iter().rev().position(|&x| x == b'\x3F') {
+            x
+        } else {
+            0
+        };
     let bmt = build_bad_match_table(pattern, right_most_wildcard_index);
 
     let mut current = (start as *mut u8).offset(pattern.len() as isize - 1);
