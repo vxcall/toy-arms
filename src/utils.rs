@@ -4,11 +4,15 @@ use std::str::Utf8Error;
 
 #[doc(hidden)]
 pub use winapi::{
+    shared::minwindef::BOOL,
+    shared::minwindef::HINSTANCE,
+    shared::minwindef::TRUE,
     shared::minwindef::{FARPROC, HMODULE},
-    shared::minwindef::BOOL, shared::minwindef::HINSTANCE, shared::minwindef::TRUE,
-    um::consoleapi::AllocConsole, um::libloaderapi::DisableThreadLibraryCalls,
-    um::wincon::FreeConsole, um::winnt::DLL_PROCESS_ATTACH,
+    um::consoleapi::AllocConsole,
+    um::libloaderapi::DisableThreadLibraryCalls,
     um::libloaderapi::{GetModuleHandleA, GetProcAddress},
+    um::wincon::FreeConsole,
+    um::winnt::DLL_PROCESS_ATTACH,
 };
 
 /// cast is a substitution of reinterpret_cast in C++.
@@ -32,18 +36,26 @@ macro_rules! create_entrypoint {
     ($function:expr) => {
         #[no_mangle]
         #[allow(non_snake_cake)]
-        extern "system" fn DllMain(h_module: $crate::HINSTANCE, dw_reason: u32, _: *const ::std::ffi::c_void, ) -> $crate::BOOL {
+        extern "system" fn DllMain(
+            h_module: $crate::HINSTANCE,
+            dw_reason: u32,
+            _: *const ::std::ffi::c_void,
+        ) -> $crate::BOOL {
             if dw_reason == $crate::DLL_PROCESS_ATTACH {
                 unsafe {
                     $crate::DisableThreadLibraryCalls(h_module);
                 }
                 ::std::thread::spawn(|| {
                     if cfg!(debug_assertions) {
-                        unsafe { $crate::AllocConsole(); }
+                        unsafe {
+                            $crate::AllocConsole();
+                        }
                     }
                     $function();
                     if cfg!(debug_assertions) {
-                        unsafe { $crate::FreeConsole(); }
+                        unsafe {
+                            $crate::FreeConsole();
+                        }
                     }
                 });
             }
@@ -59,11 +71,13 @@ pub fn get_module_handle(module_name: &str) -> Option<HMODULE> {
     unsafe {
         let mut module_handle: HMODULE = GetModuleHandleA(make_lpcstr(module_name));
         for _ in 0..100 {
-            if module_handle != 0 as HMODULE { break }
+            if module_handle != 0 as HMODULE {
+                break;
+            }
             module_handle = GetModuleHandleA(make_lpcstr(module_name));
         }
         if module_handle == 0 as HMODULE {
-            return None
+            None
         } else {
             Some(module_handle)
         }

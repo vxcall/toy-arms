@@ -22,11 +22,7 @@ macro_rules! detect_sequential_keydown {
 }
 
 pub fn detect_keydown(code: i32) -> bool {
-    if unsafe { GetAsyncKeyState(code) } & 1 != 0 {
-        true
-    } else {
-        false
-    }
+    unsafe { GetAsyncKeyState(code) & 1 != 0 }
 }
 
 /// VirtualKeyCode is a set of virtual key code defined by microsoft.

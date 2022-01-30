@@ -1,12 +1,8 @@
 use std::str::Utf8Error;
-use winapi::shared::minwindef::{DWORD, HMODULE};
-use winapi::um::psapi::{EnumProcessModules, GetModuleBaseNameA, GetModuleInformation, MODULEINFO};
-use crate::{FARPROC, get_module_handle, GetProcAddress, read_null_terminated_string};
-use crate::cast;
-use std::mem::{size_of, zeroed};
-use winapi::um::processthreadsapi::GetCurrentProcess;
-use crate::pattern_scan_core::boyer_moore_horspool;
 use thiserror::Error;
+use winapi::shared::minwindef::{DWORD, HMODULE};
+use winapi::um::processthreadsapi::GetCurrentProcess;
+use winapi::um::psapi::{EnumProcessModules, GetModuleBaseNameA, GetModuleInformation, MODULEINFO};
 use winapi::um::winnt::{CHAR, LPSTR};
 
 #[derive(Error, Debug)]
@@ -31,19 +27,22 @@ impl<'a> Module<'a> {
     pub fn from_module_name(module_name: &'a str) -> Option<Self> {
         let module_handle: HMODULE = match get_module_handle(module_name) {
             Some(e) => e,
-            None => return None
+            None => return None,
         };
         unsafe {
             let mut module_info: MODULEINFO = zeroed::<MODULEINFO>();
-            GetModuleInformation(GetCurrentProcess(), module_handle, &mut module_info, size_of::<MODULEINFO>() as u32);
-            Some(
-                Module {
-                    module_name,
-                    module_handle,
-                    module_base_address: module_info.lpBaseOfDll as usize,
-                    module_size: module_info.SizeOfImage,
-                }
-            )
+            GetModuleInformation(
+                GetCurrentProcess(),
+                module_handle,
+                &mut module_info,
+                size_of::<MODULEINFO>() as u32,
+            );
+            Some(Module {
+                module_name,
+                module_handle,
+                module_base_address: module_info.lpBaseOfDll as usize,
+                module_size: module_info.SizeOfImage,
+            })
         }
     }
 
@@ -64,9 +63,7 @@ impl<'a> Module<'a> {
     /// * `address` - relative address of the head of the string.
     #[cfg(feature = "internal")]
     pub fn read_string(&self, address: i32) -> Result<String, Utf8Error> {
-        unsafe{
-            Ok(read_null_terminated_string(self.module_handle as usize + address as usize)?)
-        }
+        unsafe { read_null_terminated_string(self.module_handle as usize + address as usize) }
     }
 
     /// find_pattern scans over entire module and returns the address if there is matched byte pattern in module.
@@ -75,12 +72,7 @@ impl<'a> Module<'a> {
     pub fn find_pattern(&self, pattern: &str) -> Option<usize> {
         let base = self.module_base_address as *mut u8;
         let end = self.module_base_address + self.module_size as usize;
-        unsafe {
-            return match boyer_moore_horspool(pattern, base, end) {
-                Some(e) => Some(e as usize),
-                None => None
-            }
-        }
+        unsafe { boyer_moore_horspool(pattern, base, end).map(|e| e as usize) }
     }
 
     /// pattern scan basically be for calculating offset of some value. It adds the offset to the pattern-matched address, dereferences, and add the `extra`.
@@ -90,8 +82,8 @@ impl<'a> Module<'a> {
     #[cfg(feature = "internal")]
     pub fn pattern_scan(&self, pattern: &str, offset: isize, extra: usize) -> Option<usize> {
         unsafe {
-        let address = self.find_pattern(pattern)?;
-        let address = (address as *mut u8).offset(offset) as *mut usize;
+            let address = self.find_pattern(pattern)?;
+            let address = (address as *mut u8).offset(offset) as *mut usize;
             // calculate relative address
             Some(*address - self.module_base_address + extra)
         }
@@ -109,16 +101,27 @@ pub fn pattern_scan_all_modules(pattern: &str) -> Option<(usize, String)> {
         let process_handle = GetCurrentProcess();
         for handle in all_handles {
             let mut module_info: MODULEINFO = std::mem::zeroed::<MODULEINFO>();
-            GetModuleInformation(process_handle, handle, &mut module_info, size_of::<MODULEINFO>() as u32);
+            GetModuleInformation(
+                process_handle,
+                handle,
+                &mut module_info,
+                size_of::<MODULEINFO>() as u32,
+            );
             let base = module_info.lpBaseOfDll as *mut u8;
             let end = module_info.lpBaseOfDll as usize + module_info.SizeOfImage as usize;
             match boyer_moore_horspool(pattern, base, end) {
                 Some(e) => {
                     let mut module_name: [CHAR; 100] = [0; 100];
-                    GetModuleBaseNameA(GetCurrentProcess(), handle, &mut module_name as LPSTR, std::mem::size_of_val(&module_name) as u32);
-                    let module_name = read_null_terminated_string(&mut module_name as *mut i8 as usize).unwrap();
+                    GetModuleBaseNameA(
+                        GetCurrentProcess(),
+                        handle,
+                        &mut module_name as LPSTR,
+                        std::mem::size_of_val(&module_name) as u32,
+                    );
+                    let module_name =
+                        read_null_terminated_string(&mut module_name as *mut i8 as usize).unwrap();
                     return Some((e as usize, module_name));
-                },
+                }
                 None => continue,
             }
         }
@@ -127,21 +130,24 @@ pub fn pattern_scan_all_modules(pattern: &str) -> Option<(usize, String)> {
 }
 
 pub fn pattern_scan_specific_range(pattern: &str, start: usize, end: usize) -> Option<*mut u8> {
-    unsafe {
-        boyer_moore_horspool(pattern, start as *mut u8, end)
-    }
+    unsafe { boyer_moore_horspool(pattern, start as *mut u8, end) }
 }
-
 
 /// * `module_name` - name of module that the desired function is in.
 /// * `function_name` - name of the function you want
 #[cfg(feature = "internal")]
-pub unsafe fn get_module_function_address(module_name: &str, function_name: &str) -> Option<FARPROC> {
+pub unsafe fn get_module_function_address(
+    module_name: &str,
+    function_name: &str,
+) -> Option<FARPROC> {
     let module_handle = match get_module_handle(module_name) {
         Some(e) => e,
-        None => return None
+        None => return None,
     };
-    Some(GetProcAddress(module_handle, crate::make_lpcstr(function_name)))
+    Some(GetProcAddress(
+        module_handle,
+        crate::make_lpcstr(function_name),
+    ))
 }
 
 #[cfg(feature = "internal")]
@@ -153,16 +159,26 @@ fn get_all_module_handles() -> Result<Vec<HMODULE>, ToyArmsInternalError> {
             // Make a buffer for required_size[out] by zero initializing the DWORD space.
             let mut required_size = std::mem::zeroed::<DWORD>();
             // The last parameter is implicitly: &mut required_size as *mut DWORD
-            return if EnumProcessModules(GetCurrentProcess(), module_handles.as_mut_ptr(), (module_handles.len() * size_of::<HMODULE>()) as u32, &mut required_size) != 0 {
+            return if EnumProcessModules(
+                GetCurrentProcess(),
+                module_handles.as_mut_ptr(),
+                (module_handles.len() * size_of::<HMODULE>()) as u32,
+                &mut required_size,
+            ) != 0
+            {
                 let number_of_handles = required_size as usize / std::mem::size_of::<HMODULE>();
                 // If buffer is smaller than required, loop to call EnumProcessModules with bigger buffer.
-                if  size_indice * 100 < number_of_handles {
+                if size_indice * 100 < number_of_handles {
                     continue;
                 }
-                Ok(module_handles.iter().filter(|e| { **e != 0 as HMODULE }).map(|e| { e.clone() }).collect::<Vec<HMODULE>>())
+                Ok(module_handles
+                    .iter()
+                    .filter(|e| **e != 0 as HMODULE)
+                    .map(|e| e.clone())
+                    .collect::<Vec<HMODULE>>())
             } else {
                 Err(ToyArmsInternalError::GetAllModuleHandlesFailed)
-            }
+            };
         }
         Err(ToyArmsInternalError::GetAllModuleHandlesFailed)
     }
