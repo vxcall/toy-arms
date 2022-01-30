@@ -1,4 +1,3 @@
-use std::mem::size_of_val;
 use std::str::Utf8Error;
 use winapi::shared::minwindef::{DWORD, HMODULE};
 use winapi::um::psapi::{EnumProcessModules, GetModuleBaseNameA, GetModuleInformation, MODULEINFO};
@@ -69,7 +68,6 @@ impl<'a> Module<'a> {
             Ok(read_null_terminated_string(self.module_handle as usize + address as usize)?)
         }
     }
-
 
     /// find_pattern scans over entire module and returns the address if there is matched byte pattern in module.
     /// * `pattern` - pattern string you're looking for. format: "8D 34 85 ? ? ? ? 89 15 ? ? ? ? 8B 41 08 8B 48 04 83 F9 FF"

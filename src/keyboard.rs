@@ -1,4 +1,5 @@
-use winapi::um::winuser::GetAsyncKeyState;
+#[doc(hidden)]
+pub use winapi::um::winuser::GetAsyncKeyState;
 /// detect_keydown returns true when user pressed the specified key.
 /// # Example
 /// ```rust
@@ -6,7 +7,20 @@ use winapi::um::winuser::GetAsyncKeyState;
 /// if toy_arms::detect_keydown(VirtualKeyCode::VK_HOME) {
 ///     println!("HOME key is pressed!");
 /// }
-///
+
+/// detect_sequential_keydown! returns true if the passed keys are both pressed.
+/// * `$keycode` - VirtualKeycode you want to detect that's being pressed.
+#[macro_export]
+macro_rules! detect_sequential_keydown {
+    ($($keycode:expr),*) => {
+            if true $(&& (|keycode| unsafe { $crate::GetAsyncKeyState(keycode) })($keycode) & 0x8000 != 0 )* {
+                true
+            } else {
+                false
+            }
+    };
+}
+
 pub fn detect_keydown(code: i32) -> bool {
     if unsafe { GetAsyncKeyState(code) } & 1 != 0 {
         true
