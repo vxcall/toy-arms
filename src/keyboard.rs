@@ -1,15 +1,14 @@
 #[doc(hidden)]
 pub use winapi::um::winuser::GetAsyncKeyState;
-/// detect_keydown returns true when user pressed the specified key.
-/// # Example
-/// ```rust
-/// use toy_arms::VirtualKeyCode;
-/// if toy_arms::detect_keydown(VirtualKeyCode::VK_HOME) {
-///     println!("HOME key is pressed!");
-/// }
 
 /// detect_sequential_keydown! returns true if the passed keys are both pressed.
 /// * `$keycode` - VirtualKeycode you want to detect that's being pressed.
+/// #Example
+/// ```rust
+/// if detect_sequential_keydown!(VirtualKeyCode::VK_INSERT, VirtualKeyCode::VK_HOME) {
+///     println!("INSERT and HOME is both pressed down");
+/// }
+/// ```
 #[macro_export]
 macro_rules! detect_sequential_keydown {
     ($($keycode:expr),*) => {
@@ -21,7 +20,22 @@ macro_rules! detect_sequential_keydown {
     };
 }
 
+/// detect_keydown returns true when you keep_pressing the specified key.
 pub fn detect_keydown(code: i32) -> bool {
+    unsafe { GetAsyncKeyState(code) as i32 & 0x8000 as i32 != 0 }
+}
+
+/// detect_keydown returns true when you pressed the specified key.
+/// However, the "key press" signal will be emitted several times when you press and hold a key.
+/// Make sure you release your finger immediately after pressing a key just in case so that this function catches key press only once.
+/// # Example
+/// ```rust
+/// use toy_arms::VirtualKeyCode;
+/// if toy_arms::detect_keypress(VirtualKeyCode::VK_HOME) {
+///     println!("HOME key is pressed!");
+/// }
+/// ```
+pub fn detect_keypress(code: i32) -> bool {
     unsafe { GetAsyncKeyState(code) & 1 != 0 }
 }
 

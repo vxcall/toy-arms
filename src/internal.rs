@@ -1,9 +1,13 @@
+use std::mem::{size_of, zeroed};
 use std::str::Utf8Error;
 use thiserror::Error;
-use winapi::shared::minwindef::{DWORD, HMODULE};
+use winapi::shared::minwindef::{DWORD, FARPROC, HMODULE};
+use winapi::um::libloaderapi::GetProcAddress;
 use winapi::um::processthreadsapi::GetCurrentProcess;
 use winapi::um::psapi::{EnumProcessModules, GetModuleBaseNameA, GetModuleInformation, MODULEINFO};
 use winapi::um::winnt::{CHAR, LPSTR};
+use crate::{cast, get_module_handle, read_null_terminated_string};
+use crate::pattern_scan_core::boyer_moore_horspool;
 
 #[derive(Error, Debug)]
 #[cfg(feature = "internal")]

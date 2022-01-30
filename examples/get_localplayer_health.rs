@@ -32,7 +32,7 @@ fn hack_main_thread() {
             if let Some(i) = LocalPlayer::from_raw(memory.read_mut(DW_LOCAL_PLAYER)) {
                 println!("health = {:?}", (*i).get_health());
             };
-            if toy_arms::detect_keydown(VirtualKeyCode::VK_INSERT) {
+            if toy_arms::detect_keypress(VirtualKeyCode::VK_INSERT) {
                 break;
             }
         }

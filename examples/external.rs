@@ -46,7 +46,7 @@ fn main() {
             .unwrap();
 
         // Exit this loop by pressing INSERT
-        if toy_arms::detect_keydown(VirtualKeyCode::VK_INSERT) {
+        if toy_arms::detect_keypress(VirtualKeyCode::VK_INSERT) {
             break;
         }
     }

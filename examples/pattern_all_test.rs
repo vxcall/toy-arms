@@ -8,7 +8,7 @@ fn hack_main() {
             .unwrap();
     println!("{:p}", result);
     loop {
-        if toy_arms::detect_keydown(VirtualKeyCode::VK_INSERT) {
+        if toy_arms::detect_keypress(VirtualKeyCode::VK_INSERT) {
             break;
         }
     }

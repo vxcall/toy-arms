@@ -4,11 +4,9 @@ This code gets module handle and function address of the func called MessageBoxA
 Then read the value called dwForceAttack and overwrite it to make player shoot.
 The offset DW_FORCE_ATTACK works as of the day i wrote this but it might not be up to date in your case.
 */
-use toy_arms::{detect_keydown, get_module_function_address, get_module_handle, HMODULE, Module, VirtualKeyCode};
+
+use toy_arms::{detect_keypress, detect_sequential_keydown, get_module_function_address, get_module_handle, HMODULE, Module, VirtualKeyCode};
 use toy_arms::cast;
-use toy_arms::{
-    detect_keydown, get_module_function_address, get_module_handle, Module, VirtualKeyCode, HMODULE,
-};
 
 toy_arms::create_entrypoint!(hack_main_thread);
 
@@ -35,13 +33,13 @@ fn hack_main_thread() {
             *shoot_flag = 5u8;
         }
         // To exit this hack loop when you input INSEERT KEY
-        if detect_keydown(VirtualKeyCode::VK_INSERT) {
+        if detect_keypress(VirtualKeyCode::VK_INSERT) {
             break;
         }
 
+        // just flexing this neat function xd.
         if detect_sequential_keydown!(VirtualKeyCode::VK_INSERT, VirtualKeyCode::VK_HOME) {
             println!("INSERT and HOME is both pressed");
         }
-
     }
 }

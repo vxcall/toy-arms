@@ -4,7 +4,7 @@ Make sure you inject this image to csgo.exe.
 The model pattern is for dwForceAttack.
 */
 
-use toy_arms::{detect_keydown, pattern_scan_all_modules, Module, VirtualKeyCode};
+use toy_arms::{detect_keypress, pattern_scan_all_modules, Module, VirtualKeyCode};
 toy_arms::create_entrypoint!(hack_main_thread);
 
 fn hack_main_thread() {
@@ -26,7 +26,7 @@ fn hack_main_thread() {
 
     loop {
         // To exit this hack loop when you input INSEERT KEY
-        if detect_keydown(VirtualKeyCode::VK_INSERT) {
+        if detect_keypress(VirtualKeyCode::VK_INSERT) {
             break;
         }
     }
