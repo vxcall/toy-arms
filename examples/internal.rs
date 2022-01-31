@@ -38,8 +38,8 @@ fn hack_main_thread() {
         }
 
         // just flexing this neat function xd.
-        if detect_sequential_keydown!(VirtualKeyCode::VK_INSERT, VirtualKeyCode::VK_HOME) {
-            println!("INSERT and HOME is both pressed");
+        if detect_keydown!(VirtualKeyCode::VK_HOME) {
+            println!("HOME is both pressed");
         }
     }
 }
