@@ -5,14 +5,19 @@ mod keyboard;
 #[doc(inline)]
 pub use keyboard::*;
 
+#[cfg(feature = "internal")]
 mod internal;
 #[doc(inline)]
+#[cfg(feature = "internal")]
 pub use internal::*;
 
+#[cfg(feature = "external")]
 mod external;
 #[doc(inline)]
+#[cfg(feature = "external")]
 pub use external::*;
 
+#[cfg(feature = "internal")]
 mod pattern_scan_core;
 
 mod utils;

@@ -5,7 +5,7 @@ Then read the value called dwForceAttack and overwrite it to make player shoot.
 The offset DW_FORCE_ATTACK works as of the day i wrote this but it might not be up to date in your case.
 */
 
-use toy_arms::{detect_keypress, detect_sequential_keydown, get_module_function_address, get_module_handle, HMODULE, Module, VirtualKeyCode};
+use toy_arms::{detect_keypress, detect_keydown, get_module_function_address, get_module_handle, HMODULE, Module, VirtualKeyCode};
 use toy_arms::cast;
 
 toy_arms::create_entrypoint!(hack_main_thread);
@@ -24,9 +24,10 @@ fn hack_main_thread() {
         println!("function address = {:?}", function_address);
     }
 
-    let memory = Module::from_module_name("client.dll").unwrap();
+    let module = Module::from_module_name("client.dll").unwrap();
 
     let shoot_flag = cast!(mut module_handle as usize + DW_FORCE_ATTACK, u8);
+
     loop {
         unsafe {
             // Auto shoot

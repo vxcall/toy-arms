@@ -1,20 +1,29 @@
-use std::fmt::Debug;
-use winapi::shared::minwindef::{FALSE, HMODULE, LPCVOID, LPVOID, TRUE};
-use winapi::um::errhandlingapi::GetLastError;
-use winapi::um::handleapi::{CloseHandle, INVALID_HANDLE_VALUE};
-use winapi::um::processthreadsapi::OpenProcess;
-use winapi::um::tlhelp32::{
-    CreateToolhelp32Snapshot, Module32First, Module32Next, Process32First, Process32Next,
-    MODULEENTRY32, PROCESSENTRY32, TH32CS_SNAPMODULE, TH32CS_SNAPMODULE32, TH32CS_SNAPPROCESS,
+use std::{
+    fmt::Debug,
+    mem::size_of,
+    ptr::null_mut,
 };
-use winapi::um::winnt::{HANDLE, PROCESS_ALL_ACCESS};
+
+use winapi::{
+        shared::{
+            minwindef::{ FALSE, HMODULE, LPCVOID, LPVOID, TRUE },
+            basetsd::SIZE_T,
+        },
+        um::{
+            errhandlingapi::GetLastError,
+            handleapi::{ CloseHandle, INVALID_HANDLE_VALUE },
+            processthreadsapi::OpenProcess,
+            winnt::{ HANDLE, PROCESS_ALL_ACCESS },
+            memoryapi::{ ReadProcessMemory, WriteProcessMemory },
+            tlhelp32::{
+                CreateToolhelp32Snapshot, Module32First, Module32Next, Process32First, Process32Next,
+                MODULEENTRY32, PROCESSENTRY32, TH32CS_SNAPMODULE, TH32CS_SNAPMODULE32, TH32CS_SNAPPROCESS,
+            }
+        }
+};
 
 use crate::read_null_terminated_string;
-use std::mem::size_of;
-use std::ptr::null_mut;
 use thiserror::Error;
-use winapi::shared::basetsd::SIZE_T;
-use winapi::um::memoryapi::{ReadProcessMemory, WriteProcessMemory};
 
 #[derive(Error, Debug)]
 #[cfg(feature = "external")]
