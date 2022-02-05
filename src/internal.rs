@@ -53,13 +53,7 @@ impl<'a> Module<'a> {
     /// read fetches the value that given address is holding.
     /// * `base_address` - the address that is supposed to have the value you want
     #[cfg(feature = "internal")]
-    pub fn read<T>(&self, address: i32) -> *const T {
-        cast!(self.module_handle as usize + address as usize, T)
-    }
-
-    /// read_mut not only fetches the value, make it mutable.
-    #[cfg(feature = "internal")]
-    pub fn read_mut<T>(&self, address: i32) -> *mut T {
+    pub fn read<T>(&self, address: i32) -> *mut T {
         cast!(mut self.module_handle as usize + address as usize, T)
     }
 

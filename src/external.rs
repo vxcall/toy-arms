@@ -66,11 +66,13 @@ impl ModuleEx {
             }
         }
     }
+
+
 }
 
 #[cfg(feature = "external")]
 #[derive(Debug)]
-pub struct MemoryEx<'a> {
+pub struct Process<'a> {
     #[warn(dead_code)]
     pub process_name: &'a str,
     pub process_id: u32,
@@ -78,11 +80,11 @@ pub struct MemoryEx<'a> {
 }
 
 #[cfg(feature = "external")]
-impl<'a> MemoryEx<'a> {
+impl<'a> Process<'a> {
     pub fn from_process_name(process_name: &'a str) -> Self {
         let process_id = get_process_id(process_name).unwrap();
         let process_handle = get_process_handle(process_id);
-        MemoryEx {
+        Process {
             process_name,
             process_id,
             process_handle,
@@ -99,7 +101,7 @@ impl<'a> MemoryEx<'a> {
                 self.process_handle,
                 base_address as LPCVOID,
                 &mut buffer as *mut _ as LPVOID,
-                size_of::<LPVOID>() as SIZE_T,
+                size_of::<T>() as SIZE_T,
                 null_mut::<SIZE_T>(),
             );
             if ok == FALSE {
@@ -119,7 +121,7 @@ impl<'a> MemoryEx<'a> {
                 self.process_handle,
                 base_address as LPVOID,
                 value as *mut T as LPCVOID,
-                size_of::<LPCVOID>() as SIZE_T,
+                size_of::<T>() as SIZE_T,
                 null_mut::<SIZE_T>(),
             );
             if ok == FALSE {
@@ -232,7 +234,7 @@ fn test_get_process_handle() {
 #[test]
 #[ignore]
 fn test_get_module_info() {
-    let memex = MemoryEx::from_process_name("csgo.exe");
+    let memex = Process::from_process_name("csgo.exe");
     let module_info = memex.get_module_info("client.dll").unwrap();
     assert_ne!(module_info.module_name, "client.dll");
 }

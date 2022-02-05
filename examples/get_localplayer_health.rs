@@ -10,9 +10,10 @@ use toy_arms_derive::GameObject;
 
 create_entrypoint!(hack_main_thread);
 
+// This macro provides from_raw() func that ensures the base address is not null.
 #[derive(GameObject)]
 struct LocalPlayer {
-    pointer: *const usize, // Denotes the base address of LocalPlayer
+    pointer: *const usize, // Denote the base address of LocalPlayer to use it later in get_health() function.
 }
 
 impl LocalPlayer {
@@ -22,14 +23,14 @@ impl LocalPlayer {
 }
 
 // This offset has to be up to date.
-const DW_LOCAL_PLAYER: i32 = 0xDA545C;
+const DW_LOCAL_PLAYER: i32 = 0xDB35EC;
 
 fn hack_main_thread() {
-    let memory = Module::from_module_name("client.dll");
+    let module = Module::from_module_name("client.dll").unwrap();
     unsafe {
         //let dw_local_player = memory.read_mut::<LocalPlayer>(0xDA244C);
         loop {
-            if let Some(i) = LocalPlayer::from_raw(memory.read_mut(DW_LOCAL_PLAYER)) {
+            if let Some(i) = LocalPlayer::from_raw(module.read(DW_LOCAL_PLAYER)) {
                 println!("health = {:?}", (*i).get_health());
             };
             if toy_arms::detect_keypress(VirtualKeyCode::VK_INSERT) {
