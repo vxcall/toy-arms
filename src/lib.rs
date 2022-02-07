@@ -2,27 +2,21 @@
 
 #[cfg(target_os = "windows")]
 mod keyboard;
+
 #[doc(inline)]
 pub use keyboard::*;
 
 #[cfg(feature = "internal")]
-mod internal;
-#[doc(inline)]
-#[cfg(feature = "internal")]
-pub use internal::*;
+pub mod internal;
 
 #[cfg(feature = "external")]
-mod external;
-#[doc(inline)]
-#[cfg(feature = "external")]
-pub use external::*;
+pub mod external;
 
-#[cfg(feature = "internal")]
-mod pattern_scan_core;
+// This is necessary to let submodules import the functions in this.
+pub mod pattern_scan_common;
 
-mod utils;
 #[doc(inline)]
-pub use utils::*;
+pub use internal::utils::*;
 
 pub trait GameObject {
     unsafe fn from_raw(address: *const usize) -> Option<*mut Self>;

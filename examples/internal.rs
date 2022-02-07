@@ -7,6 +7,7 @@ The offset DW_FORCE_ATTACK works as of the day i wrote this but it might not be 
 
 use toy_arms::{detect_keypress, detect_keydown, get_module_function_address, get_module_handle, HMODULE, Module, VirtualKeyCode};
 use toy_arms::cast;
+use toy_arms::internal::{get_module_function_address, Module};
 
 toy_arms::create_entrypoint!(hack_main_thread);
 

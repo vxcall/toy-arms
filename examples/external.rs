@@ -4,7 +4,9 @@ Following code is trying to get process id and process handle first, then gettin
 Then showing the way to overwrite value at dwForceAttack to make player shoot.
 The offset DW_CLIENT_STATE, DW_CLIENT_STATE_STATE and DW_FORCE_ATTACK work as of the day i wrote this but it might not be up to date in your case.
 */
-use toy_arms::{Process, VirtualKeyCode};
+use toy_arms::VirtualKeyCode;
+use toy_arms::external::Process;
+use toy_arms::external::{ read, write };
 
 fn main() {
     // This const has to be up to date.
@@ -26,20 +28,13 @@ fn main() {
     // U have to specify the type of the value with turbofish
     println!(
         "{:x}",
-        memex
-            .read::<i32>(
-                memex
-                    .read::<u32>(memex.get_module_base("engine.dll").unwrap() + DW_CLIENT_STATE)
-                    .unwrap() as usize
-                    + DW_CLIENT_STATE_STATE
-            )
-            .unwrap()
+        read::<i32>(memex.process_handle, read::<u32>(memex.process_handle, memex.get_module_base("engine.dll").unwrap() + DW_CLIENT_STATE).unwrap() as usize + DW_CLIENT_STATE_STATE).unwrap()
     );
 
     loop {
         // write helps you tamper with the value.
-        memex
-            .write::<u32>(
+            write::<u32>(
+                memex.process_handle,
                 memex.get_module_base("client.dll").unwrap() + DW_FORCE_ATTACK as usize,
                 &mut 0x5,
             )

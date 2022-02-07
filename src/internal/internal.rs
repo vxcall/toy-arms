@@ -7,10 +7,9 @@ use winapi::um::processthreadsapi::GetCurrentProcess;
 use winapi::um::psapi::{EnumProcessModules, GetModuleBaseNameA, GetModuleInformation, MODULEINFO};
 use winapi::um::winnt::{CHAR, LPSTR};
 use crate::{cast, get_module_handle, read_null_terminated_string};
-use crate::pattern_scan_core::boyer_moore_horspool;
+use crate::internal::pattern_scan::boyer_moore_horspool;
 
 #[derive(Error, Debug)]
-#[cfg(feature = "internal")]
 pub enum ToyArmsInternalError {
     #[error("get_all_module_handles failed")]
     GetAllModuleHandlesFailed,
@@ -18,7 +17,6 @@ pub enum ToyArmsInternalError {
     PatternScanALLModulesFailed,
 }
 
-#[cfg(feature = "internal")]
 pub struct Module<'a> {
     pub module_name: &'a str,
     pub module_handle: HMODULE,
@@ -26,7 +24,6 @@ pub struct Module<'a> {
     pub module_base_address: usize,
 }
 
-#[cfg(feature = "internal")]
 impl<'a> Module<'a> {
     pub fn from_module_name(module_name: &'a str) -> Option<Self> {
         let module_handle: HMODULE = match get_module_handle(module_name) {
@@ -52,23 +49,20 @@ impl<'a> Module<'a> {
 
     /// read fetches the value that given address is holding.
     /// * `base_address` - the address that is supposed to have the value you want
-    #[cfg(feature = "internal")]
     pub fn read<T>(&self, address: i32) -> *mut T {
         cast!(mut self.module_handle as usize + address as usize, T)
     }
 
     /// read_string reads the string untill the null terminator that is in the given module
     /// * `address` - relative address of the head of the string.
-    #[cfg(feature = "internal")]
     pub fn read_string(&self, address: i32) -> Result<String, Utf8Error> {
         unsafe { read_null_terminated_string(self.module_handle as usize + address as usize) }
     }
 
     /// find_pattern scans over entire module and returns the address if there is matched byte pattern in module.
     /// * `pattern` - pattern string you're looking for. format: "8D 34 85 ? ? ? ? 89 15 ? ? ? ? 8B 41 08 8B 48 04 83 F9 FF"
-    #[cfg(feature = "internal")]
     pub fn find_pattern(&self, pattern: &str) -> Option<usize> {
-        let base = self.module_base_address as *mut u8;
+        let base = self.module_base_address;
         let end = self.module_base_address + self.module_size as usize;
         unsafe { boyer_moore_horspool(pattern, base, end).map(|e| e as usize) }
     }
@@ -77,7 +71,6 @@ impl<'a> Module<'a> {
     /// * `pattern` - pattern string you're looking for. format: "8D 34 85 ? ? ? ? 89 15 ? ? ? ? 8B 41 08 8B 48 04 83 F9 FF"
     /// * `offset` - offset of the address from pattern's base.
     /// * `extra` - offset of the address from dereferenced address.
-    #[cfg(feature = "internal")]
     pub fn pattern_scan(&self, pattern: &str, offset: isize, extra: usize) -> Option<usize> {
         unsafe {
             let address = self.find_pattern(pattern)?;
@@ -92,7 +85,6 @@ impl<'a> Module<'a> {
 /// * `pattern` - pattern string you're looking for. format: "8D 34 85 ? ? ? ? 89 15 ? ? ? ? 8B 41 08 8B 48 04 83 F9 FF"
 /// * `offset` - offset of the address from pattern's base.
 /// * `extra` - offset of the address from dereferenced address.
-#[cfg(feature = "internal")]
 pub fn pattern_scan_all_modules(pattern: &str) -> Option<(usize, String)> {
     unsafe {
         let all_handles = get_all_module_handles().ok()?;
@@ -105,7 +97,7 @@ pub fn pattern_scan_all_modules(pattern: &str) -> Option<(usize, String)> {
                 &mut module_info,
                 size_of::<MODULEINFO>() as u32,
             );
-            let base = module_info.lpBaseOfDll as *mut u8;
+            let base = module_info.lpBaseOfDll as usize;
             let end = module_info.lpBaseOfDll as usize + module_info.SizeOfImage as usize;
             match boyer_moore_horspool(pattern, base, end) {
                 Some(e) => {
@@ -128,12 +120,11 @@ pub fn pattern_scan_all_modules(pattern: &str) -> Option<(usize, String)> {
 }
 
 pub fn pattern_scan_specific_range(pattern: &str, start: usize, end: usize) -> Option<*mut u8> {
-    unsafe { boyer_moore_horspool(pattern, start as *mut u8, end) }
+    unsafe { boyer_moore_horspool(pattern, start, end) }
 }
 
 /// * `module_name` - name of module that the desired function is in.
 /// * `function_name` - name of the function you want
-#[cfg(feature = "internal")]
 pub unsafe fn get_module_function_address(
     module_name: &str,
     function_name: &str,
@@ -148,7 +139,6 @@ pub unsafe fn get_module_function_address(
     ))
 }
 
-#[cfg(feature = "internal")]
 fn get_all_module_handles() -> Result<Vec<HMODULE>, ToyArmsInternalError> {
     unsafe {
         for size_indice in 3..=10 {

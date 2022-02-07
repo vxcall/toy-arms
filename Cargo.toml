@@ -25,6 +25,10 @@ name = "external"
 required-features = ["external"]
 
 [[example]]
+name = "pattern_scanning_ex"
+required-features = ["external"]
+
+[[example]]
 name = "get_localplayer_health"
 crate-type = ["cdylib"]
 
