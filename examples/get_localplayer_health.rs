@@ -4,7 +4,6 @@ Make sure that you inject this image to csgo.exe.
 also, the offset of DW_LOCAL_PLAYER works as of the day i wrote this but it might not be up to date in your case.
 */
 use toy_arms::GameObject;
-use toy_arms::Module;
 use toy_arms::{cast, create_entrypoint, VirtualKeyCode};
 use toy_arms::internal::Module;
 use toy_arms_derive::GameObject;
