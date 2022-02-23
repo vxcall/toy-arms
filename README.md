@@ -5,6 +5,7 @@
 
 # :alembic: toy-arms
 <img src="https://user-images.githubusercontent.com/33578715/155048461-cb5cdd3f-6d59-4558-b3be-ce8b78144953.png" />
+
 Huge thanks to my pal for this header [@suzuharuR](https://twitter.com/suzuharuR)
 
 [Usage](#Usage) | [Examples](#fire-minimal-examples) | [Document](https://docs.rs/toy-arms)
