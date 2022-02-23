@@ -1,9 +1,9 @@
 [package]
 name = "toy-arms"
-version = "0.9.2"
+version = "0.9.3"
 edition = "2018"
 authors = ["s3pt3mb3r <s3pt3mb3r@protonmail.com>"]
-description = "A crates designed to ease game hack in rust."
+description = "A crates designed to ease game hacking in rust."
 license = "MIT"
 keywords = ["gamehack", "cheat", "windows", "memory"]
 repository = "https://github.com/s3pt3mb3r/toy-arms"
@@ -21,31 +21,31 @@ internal = []
 external = []
 
 [[example]]
-name = "external"
+name = "ex_auto_shoot"
 required-features = ["external"]
 
 [[example]]
-name = "pattern_scanning_ex"
+name = "ex_pattern_scanning"
 required-features = ["external"]
 
 [[example]]
-name = "get_localplayer_health"
+name = "in_get_localplayer_health"
 crate-type = ["cdylib"]
 
 [[example]]
-name = "simplest_dll"
+name = "in_simplest_dll"
 crate-type = ["cdylib"]
 
 [[example]]
-name = "internal"
+name = "in_auto_shoot"
 crate-type = ["cdylib"]
 
 [[example]]
-name = "pattern_scanning"
+name = "in_pattern_scanning"
 crate-type = ["cdylib"]
 
 [[example]]
-name = "pattern_all_test"
+name = "in_pattern_all_test"
 crate-type = ["cdylib"]
 
 [package.metadata.docs.rs]

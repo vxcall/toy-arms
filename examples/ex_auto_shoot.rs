@@ -4,15 +4,16 @@ Following code is trying to get process id and process handle first, then gettin
 Then showing the way to overwrite value at dwForceAttack to make player shoot.
 The offset DW_CLIENT_STATE, DW_CLIENT_STATE_STATE and DW_FORCE_ATTACK work as of the day i wrote this but it might not be up to date in your case.
 */
+
 use toy_arms::VirtualKeyCode;
 use toy_arms::external::Process;
 use toy_arms::external::{ read, write };
 
 fn main() {
     // This const has to be up to date.
-    const DW_CLIENT_STATE: usize = 0x58BFC4;
+    const DW_CLIENT_STATE: usize = 0x58CFC4;
     const DW_CLIENT_STATE_STATE: usize = 0x108;
-    const DW_FORCE_ATTACK: usize = 0x31FF054;
+    const DW_FORCE_ATTACK: usize = 0x31FE33C;
     // Getting process information
     let process = Process::from_process_name("csgo.exe");
     println!(
