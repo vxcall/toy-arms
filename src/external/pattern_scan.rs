@@ -13,11 +13,10 @@ pub(crate) unsafe fn boyer_moore_horspool(
     let pattern_vec = process_pattern_from_str(pattern);
     let pattern = pattern_vec.as_slice();
 
-    let right_most_wildcard_index = pattern.len()
-        - if let Some(x) = pattern.iter().rev().position(|&x| x == b'\x3F') {
+    let right_most_wildcard_index = if let Some(x) = pattern.iter().rev().position(|&x| x == b'\x3F') {
          x
         } else {
-         0
+        pattern.len()
         };
     let bmt = build_bad_match_table(pattern, right_most_wildcard_index);
 
@@ -30,24 +29,24 @@ pub(crate) unsafe fn boyer_moore_horspool(
             VirtualQueryEx(process_handle, current as LPCVOID, &mut memory_info, std::mem::size_of::<MEMORY_BASIC_INFORMATION>());
             next_page_base = memory_info.BaseAddress as usize + memory_info.RegionSize as usize;
             if !is_page_readable(&memory_info) {
-                current = (memory_info.BaseAddress as usize
+                current = memory_info.BaseAddress as usize
                     + memory_info.RegionSize as usize
-                    + pattern.len()
-                );
+                    + pattern.len();
                 continue;
             }
         }
 
         let mut pattern_match_num = 0;
         for (i, p) in pattern.iter().rev().enumerate() {
-            if *p == b'\x3F' || *p == read::<u8>(process_handle, current).unwrap() {
+            let current_byte = read::<u8>(process_handle, current).expect("READ FAILED");
+            if *p == b'\x3F' || *p == current_byte {
                 pattern_match_num += 1;
                 if pattern_match_num == pattern.len() {
                     return Some(current);
                 }
                 current = current - 1;
             } else {
-                let movement_num = if let Some(i) = bmt.get(&read::<u8>(process_handle, current).unwrap()) {
+                let movement_num = if let Some(i) = bmt.get(&current_byte) {
                     i.clone()
                 } else {
                     right_most_wildcard_index

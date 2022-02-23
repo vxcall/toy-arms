@@ -6,8 +6,12 @@ use winapi::um::libloaderapi::GetProcAddress;
 use winapi::um::processthreadsapi::GetCurrentProcess;
 use winapi::um::psapi::{EnumProcessModules, GetModuleBaseNameA, GetModuleInformation, MODULEINFO};
 use winapi::um::winnt::{CHAR, LPSTR};
-use crate::{cast, get_module_handle, read_null_terminated_string};
-use crate::internal::pattern_scan::boyer_moore_horspool;
+use crate::{cast};
+use crate::utils_common::read_null_terminated_string;
+use crate::internal::{
+    utils::get_module_handle,
+    pattern_scan::boyer_moore_horspool,
+};
 
 #[derive(Error, Debug)]
 pub enum ToyArmsInternalError {
@@ -135,7 +139,7 @@ pub unsafe fn get_module_function_address(
     };
     Some(GetProcAddress(
         module_handle,
-        crate::make_lpcstr(function_name),
+        crate::internal::utils::make_lpcstr(function_name),
     ))
 }
 

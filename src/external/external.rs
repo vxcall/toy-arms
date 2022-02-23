@@ -22,7 +22,7 @@ use winapi::{
         }
 };
 
-use crate::read_null_terminated_string;
+use crate::utils_common::read_null_terminated_string;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -52,13 +52,14 @@ pub struct Module {
 }
 
 impl Module {
-    pub fn from_module_entry(process_handle: HANDLE, module_entry: &MODULEENTRY32, module_name: String) -> Self {
+    fn from_module_entry(process_handle: HANDLE, module_entry: &MODULEENTRY32, module_name: String) -> Self {
         Module {
             process_handle,
             module_size: module_entry.modBaseSize,
             module_base_address: module_entry.modBaseAddr as usize,
             module_handle: module_entry.hModule,
             module_name,
+            // This is allowed because szExePath.as_ptr() is the address within module_entry variable, not the address in the target process.
             module_path: unsafe{ read_null_terminated_string(module_entry.szExePath.as_ptr() as usize) }
                 .unwrap(),
         }
@@ -68,6 +69,16 @@ impl Module {
         let base = self.module_base_address;
         let end = self.module_base_address + self.module_size as usize;
         unsafe { crate::external::pattern_scan::boyer_moore_horspool(self.process_handle, pattern, base, end) }
+    }
+
+    pub fn pattern_scan(&self, pattern: &str, offset: usize, extra: usize) -> Option<usize> {
+        let address = self.find_pattern(pattern)?;
+        let address = address + offset;
+        Some(read::<usize>(self.process_handle, address).expect("READ FAILED IN PATTERN SCAN") - self.module_base_address + extra)
+    }
+
+    pub fn find_pattern_specific_range(&self, pattern: &str, start: usize, end: usize) -> Option<usize> {
+        unsafe { crate::external::pattern_scan::boyer_moore_horspool(self.process_handle, pattern, start, end) }
     }
 }
 

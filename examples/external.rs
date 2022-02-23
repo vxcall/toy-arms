@@ -14,28 +14,28 @@ fn main() {
     const DW_CLIENT_STATE_STATE: usize = 0x108;
     const DW_FORCE_ATTACK: usize = 0x31FF054;
     // Getting process information
-    let memex = Process::from_process_name("csgo.exe");
+    let process = Process::from_process_name("csgo.exe");
     println!(
         "process id = {}, \nprocess handle = {:?}",
-        memex.process_id, memex.process_handle
+        process.process_id, process.process_handle
     );
 
     // You can get module information by using get_module_info
-    let module_info = memex.get_module_info("client.dll").unwrap();
+    let module_info = process.get_module_info("client.dll").unwrap();
     println!("{}", module_info.module_name);
 
     // read fetches the value at where the address is pointing.
     // U have to specify the type of the value with turbofish
     println!(
         "{:x}",
-        read::<i32>(memex.process_handle, read::<u32>(memex.process_handle, memex.get_module_base("engine.dll").unwrap() + DW_CLIENT_STATE).unwrap() as usize + DW_CLIENT_STATE_STATE).unwrap()
+        read::<i32>(process.process_handle, read::<u32>(process.process_handle, process.get_module_base("engine.dll").unwrap() + DW_CLIENT_STATE).unwrap() as usize + DW_CLIENT_STATE_STATE).unwrap()
     );
 
     loop {
         // write helps you tamper with the value.
             write::<u32>(
-                memex.process_handle,
-                memex.get_module_base("client.dll").unwrap() + DW_FORCE_ATTACK as usize,
+                process.process_handle,
+                process.get_module_base("client.dll").unwrap() + DW_FORCE_ATTACK as usize,
                 &mut 0x5,
             )
             .unwrap();

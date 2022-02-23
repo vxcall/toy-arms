@@ -14,9 +14,7 @@ pub mod external;
 
 // This is necessary to let submodules import the functions in this.
 pub mod pattern_scan_common;
-
-#[doc(inline)]
-pub use internal::utils::*;
+mod utils_common;
 
 pub trait GameObject {
     unsafe fn from_raw(address: *const usize) -> Option<*mut Self>;
