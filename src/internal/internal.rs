@@ -1,7 +1,6 @@
 use std::mem::{size_of, zeroed};
 use std::str::Utf8Error;
-use thiserror::Error;
-use winapi::shared::minwindef::{DWORD, FARPROC, HMODULE};
+use winapi::shared::minwindef::{DWORD, FARPROC, HMODULE, MAX_PATH};
 use winapi::um::libloaderapi::GetProcAddress;
 use winapi::um::processthreadsapi::GetCurrentProcess;
 use winapi::um::psapi::{EnumProcessModules, GetModuleBaseNameA, GetModuleInformation, MODULEINFO};
@@ -13,19 +12,27 @@ use crate::internal::{
     pattern_scan::boyer_moore_horspool,
 };
 
-#[derive(Error, Debug)]
-pub enum ToyArmsInternalError {
-    #[error("get_all_module_handles failed")]
+pub enum TAInternalError {
     GetAllModuleHandlesFailed,
-    #[error("pattern_scan_all_modules failed")]
-    PatternScanALLModulesFailed,
 }
 
+#[derive(Debug)]
 pub struct Module<'a> {
     pub module_name: &'a str,
     pub module_handle: HMODULE,
     pub module_size: u32,
     pub module_base_address: usize,
+}
+
+impl<'a> Default for Module<'a> {
+    fn default() -> Self {
+        Module {
+            module_name: "",
+            module_handle: 0x0 as HMODULE,
+            module_size: 0,
+            module_base_address: 0,
+        }
+    }
 }
 
 impl<'a> Module<'a> {
@@ -53,7 +60,7 @@ impl<'a> Module<'a> {
 
     /// read fetches the value that given address is holding.
     /// * `base_address` - the address that is supposed to have the value you want
-    pub fn read<T>(&self, address: i32) -> *mut T {
+    pub fn read<T>(&self, address: u32) -> *mut T {
         cast!(mut self.module_handle as usize + address as usize, T)
     }
 
@@ -105,7 +112,7 @@ pub fn pattern_scan_all_modules(pattern: &str) -> Option<(usize, String)> {
             let end = module_info.lpBaseOfDll as usize + module_info.SizeOfImage as usize;
             match boyer_moore_horspool(pattern, base, end) {
                 Some(e) => {
-                    let mut module_name: [CHAR; 100] = [0; 100];
+                    let mut module_name: [CHAR; MAX_PATH] = [0; MAX_PATH];
                     GetModuleBaseNameA(
                         GetCurrentProcess(),
                         handle,
@@ -143,7 +150,7 @@ pub unsafe fn get_module_function_address(
     ))
 }
 
-fn get_all_module_handles() -> Result<Vec<HMODULE>, ToyArmsInternalError> {
+fn get_all_module_handles() -> Result<Vec<HMODULE>, TAInternalError> {
     unsafe {
         for size_indice in 3..=10 {
             // Buffer size is size_indice * sizeof(HMODULE) * 100
@@ -169,9 +176,9 @@ fn get_all_module_handles() -> Result<Vec<HMODULE>, ToyArmsInternalError> {
                     .map(|e| e.clone())
                     .collect::<Vec<HMODULE>>())
             } else {
-                Err(ToyArmsInternalError::GetAllModuleHandlesFailed)
+                Err(TAInternalError::GetAllModuleHandlesFailed)
             };
         }
-        Err(ToyArmsInternalError::GetAllModuleHandlesFailed)
+        Err(TAInternalError::GetAllModuleHandlesFailed)
     }
 }

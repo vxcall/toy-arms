@@ -13,7 +13,7 @@ readme = "README.md"
 winapi = { version = "0.3.9", features = ["winuser", "minwindef", "libloaderapi", "memoryapi", "consoleapi", "winnt",
     "tlhelp32", "handleapi", "processthreadsapi", "impl-default", "errhandlingapi", "basetsd", "psapi"] }
 toy-arms_derive = {path = "./toy-arms_derive", version = "0.1.1"}
-thiserror = "1.0.29"
+thiserror = "1.0.30"
 
 [features]
 default = ["internal"]
@@ -22,6 +22,10 @@ external = []
 
 [[example]]
 name = "ex_auto_shoot"
+required-features = ["external"]
+
+[[example]]
+name = "ex_get_localplayer_health"
 required-features = ["external"]
 
 [[example]]

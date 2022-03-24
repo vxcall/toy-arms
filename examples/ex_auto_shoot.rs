@@ -15,7 +15,7 @@ fn main() {
     const DW_CLIENT_STATE_STATE: usize = 0x108;
     const DW_FORCE_ATTACK: usize = 0x31FE33C;
     // Getting process information
-    let process = Process::from_process_name("csgo.exe");
+    let process = Process::from_process_name("csgo.exe").unwrap();
     println!(
         "process id = {}, \nprocess handle = {:?}",
         process.process_id, process.process_handle

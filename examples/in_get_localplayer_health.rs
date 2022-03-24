@@ -17,13 +17,11 @@ struct LocalPlayer {
 }
 
 impl LocalPlayer {
-    unsafe fn get_health(&self) -> u16 {
-        *cast!(self.pointer as usize + 0x100, u16)
-    }
+    unsafe fn get_health(&self) -> u16 { *cast!(self.pointer as usize + 0x100, u16) }
 }
 
 // This offset has to be up to date.
-const DW_LOCAL_PLAYER: i32 = 0xDB25DC;
+const DW_LOCAL_PLAYER: u32 = 0xDB35DC;
 
 fn hack_main_thread() {
     let module = Module::from_module_name("client.dll").unwrap();

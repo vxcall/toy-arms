@@ -7,7 +7,7 @@ fn main() {
     let mut once = false;
 
     // Getting process information
-    let process = Process::from_process_name("csgo.exe");
+    let process = Process::from_process_name("csgo.exe").unwrap();
     // You can get module information by using get_client
     let client = process.get_module_info("client.dll").unwrap();
 

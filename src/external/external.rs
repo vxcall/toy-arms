@@ -3,6 +3,7 @@ use std::{
     mem::size_of,
     ptr::null_mut,
 };
+use std::mem::size_of_val;
 
 use winapi::{
         shared::{
@@ -21,25 +22,13 @@ use winapi::{
             }
         }
 };
+use winapi::shared::minwindef::DWORD;
+use winapi::um::memoryapi::{VirtualProtectEx, VirtualQueryEx};
+use winapi::um::winnt::{MEMORY_BASIC_INFORMATION, PAGE_READWRITE};
+use crate::pattern_scan_common::is_page_readable;
+use super::error::{ReadWriteMemoryFailedDetail, TAExternalError, SnapshotFailedDetail };
 
 use crate::utils_common::read_null_terminated_string;
-use thiserror::Error;
-
-#[derive(Error, Debug)]
-pub enum ToyArmsExternalError {
-    #[error("Taking snapshot FAILED.")]
-    SnapshotFailed,
-    #[error("No more files")]
-    NoMoreFiles,
-    #[error("Process not found")]
-    ProcessNotFound,
-    #[error("Module not found")]
-    ModuleNotFound,
-    #[error("ReadProcessMemory failed")]
-    ReadProcessMemoryFailed,
-    #[error("WriteProcessMemory failed")]
-    WriteProcessMemoryFailed,
-}
 
 #[derive(Debug)]
 pub struct Module {
@@ -51,6 +40,19 @@ pub struct Module {
     pub module_path: String,
 }
 
+impl Default for Module {
+    fn default() -> Self {
+        Module {
+            process_handle: 0x0 as HANDLE,
+            module_size: 0,
+            module_base_address: 0,
+            module_handle: 0x0 as HMODULE,
+            module_name: String::default(),
+            module_path: String::default(),
+        }
+    }
+}
+
 impl Module {
     fn from_module_entry(process_handle: HANDLE, module_entry: &MODULEENTRY32, module_name: String) -> Self {
         Module {
@@ -60,8 +62,7 @@ impl Module {
             module_handle: module_entry.hModule,
             module_name,
             // This is allowed because szExePath.as_ptr() is the address within module_entry variable, not the address in the target process.
-            module_path: unsafe{ read_null_terminated_string(module_entry.szExePath.as_ptr() as usize) }
-                .unwrap(),
+            module_path: unsafe{ read_null_terminated_string(module_entry.szExePath.as_ptr() as usize) }.unwrap(),
         }
     }
 
@@ -84,18 +85,35 @@ impl Module {
 
 /// read fetches the value that given address is holding.
 /// * `base_address` - the address that is supposed to have the value you want
-pub fn read<T>(process_handle: HANDLE, base_address: usize) -> Result<T, ToyArmsExternalError> {
+pub fn read<T>(process_handle: HANDLE, base_address: usize) -> Result<T, TAExternalError> {
     unsafe {
+        let mut memory_info: MEMORY_BASIC_INFORMATION = MEMORY_BASIC_INFORMATION::default();
+        VirtualQueryEx(process_handle, base_address as LPCVOID, &mut memory_info, std::mem::size_of::<MEMORY_BASIC_INFORMATION>());
+        let is_readable = is_page_readable(&memory_info);
+        let mut old_protect = PAGE_READWRITE;
+        let mut new_protect = PAGE_READWRITE;
+        if !is_readable {
+            VirtualProtectEx(process_handle, base_address as LPVOID, size_of::<LPVOID>(), new_protect, &mut old_protect as *mut DWORD);
+        }
         let mut buffer: T = std::mem::zeroed::<T>();
         let ok = ReadProcessMemory(
             process_handle,
             base_address as LPCVOID,
             &mut buffer as *mut _ as LPVOID,
-            size_of::<T>() as SIZE_T,
+            size_of_val(&buffer) as SIZE_T,
             null_mut::<SIZE_T>(),
         );
+        if !is_readable {
+            VirtualProtectEx(process_handle, base_address as LPVOID, size_of::<LPVOID>(), old_protect, &mut new_protect as *mut DWORD);
+        }
         if ok == FALSE {
-            return Err(ToyArmsExternalError::ReadProcessMemoryFailed);
+            let error_code = GetLastError();
+            return match error_code {
+                6 => Err(TAExternalError::ReadMemoryFailed(ReadWriteMemoryFailedDetail::ErrorInvalidHandle)),
+                299 => Err(TAExternalError::ReadMemoryFailed(ReadWriteMemoryFailedDetail::ErrorPartialCopy)),
+                487 => Err(TAExternalError::ReadMemoryFailed(ReadWriteMemoryFailedDetail::ErrorInvalidAddress)),
+                _ => Err(TAExternalError::ReadMemoryFailed(ReadWriteMemoryFailedDetail::UnknownError { error_code })),
+            }
         }
         Ok(buffer)
     }
@@ -104,7 +122,7 @@ pub fn read<T>(process_handle: HANDLE, base_address: usize) -> Result<T, ToyArms
 /// write overwrites the value that given base_address is holding.
 /// * `base_address` - the address that is supposed have the value you want to tamper with.
 /// * `value` - new value you wanna overwrite
-pub fn write<T>(process_handle: HANDLE, base_address: usize, value: &mut T) -> Result<(), ToyArmsExternalError> {
+pub fn write<T>(process_handle: HANDLE, base_address: usize, value: &mut T) -> Result<(), TAExternalError> {
     unsafe {
         let ok = WriteProcessMemory(
             process_handle,
@@ -114,8 +132,13 @@ pub fn write<T>(process_handle: HANDLE, base_address: usize, value: &mut T) -> R
             null_mut::<SIZE_T>(),
         );
         if ok == FALSE {
-            println!("{}", GetLastError());
-            return Err(ToyArmsExternalError::WriteProcessMemoryFailed);
+            let error_code = GetLastError();
+            return match error_code {
+                6 => Err(TAExternalError::ReadMemoryFailed(ReadWriteMemoryFailedDetail::ErrorInvalidHandle)),
+                299 => Err(TAExternalError::WriteMemoryFailed(ReadWriteMemoryFailedDetail::ErrorPartialCopy)),
+                487 => Err(TAExternalError::WriteMemoryFailed(ReadWriteMemoryFailedDetail::ErrorInvalidAddress)),
+                _ => Err(TAExternalError::WriteMemoryFailed(ReadWriteMemoryFailedDetail::UnknownError { error_code })),
+            }
         }
     }
     Ok(())
@@ -130,23 +153,33 @@ pub struct Process<'a> {
     pub process_handle: HANDLE,
 }
 
-impl<'a> Process<'a> {
-    pub fn from_process_name(process_name: &'a str) -> Self {
-        let process_id = get_process_id(process_name).unwrap();
-        let process_handle = get_process_handle(process_id);
+impl<'a> Default for Process<'a> {
+    fn default() -> Self {
         Process {
+            process_name: "",
+            process_id: 0,
+            process_handle: 0x0 as HANDLE,
+        }
+    }
+}
+
+impl<'a> Process<'a> {
+    pub fn from_process_name(process_name: &'a str) -> Result<Self, TAExternalError> {
+        let process_id = get_process_id(process_name)?;
+        let process_handle = get_process_handle(process_id);
+        Ok(Process {
             process_name,
             process_id,
             process_handle,
-        }
+        })
     }
 
-    pub fn get_module_info(&self, module_name: &str) -> Result<Module, ToyArmsExternalError> {
+    pub fn get_module_info(&self, module_name: &str) -> Result<Module, TAExternalError> {
         unsafe {
             let snap_handle =
                 CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, self.process_id);
             if snap_handle == INVALID_HANDLE_VALUE {
-                return Err(ToyArmsExternalError::SnapshotFailed);
+                return Err(TAExternalError::SnapshotFailed(SnapshotFailedDetail::InvalidHandle));
             }
             let mut module_entry: MODULEENTRY32 = MODULEENTRY32::default();
             module_entry.dwSize = size_of::<MODULEENTRY32>() as u32;
@@ -163,7 +196,7 @@ impl<'a> Process<'a> {
                 loop {
                     if Module32Next(snap_handle, &mut module_entry) == FALSE {
                         if GetLastError() == 18 {
-                            return Err(ToyArmsExternalError::NoMoreFiles);
+                            return Err(TAExternalError::SnapshotFailed(SnapshotFailedDetail::NoMoreFiles));
                         }
                     }
                     if read_null_terminated_string(module_entry.szModule.as_ptr() as usize).unwrap()
@@ -177,21 +210,21 @@ impl<'a> Process<'a> {
                     }
                 }
             }
-            Err(ToyArmsExternalError::ModuleNotFound)
+            Err(TAExternalError::ModuleNotFound)
         }
     }
 
-    pub fn get_module_base(&self, module_name: &str) -> Result<usize, ToyArmsExternalError> {
+    pub fn get_module_base(&self, module_name: &str) -> Result<usize, TAExternalError> {
         let info: Module = self.get_module_info(module_name)?;
         Ok(info.module_base_address)
     }
 }
 
-fn get_process_id(process_name: &str) -> Result<u32, ToyArmsExternalError> {
+fn get_process_id(process_name: &str) -> Result<u32, TAExternalError> {
     unsafe {
         let snap_handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
         if snap_handle == INVALID_HANDLE_VALUE {
-            return Err(ToyArmsExternalError::SnapshotFailed);
+            return Err(TAExternalError::SnapshotFailed(SnapshotFailedDetail::InvalidHandle));
         }
         let mut proc_entry: PROCESSENTRY32 = PROCESSENTRY32::default();
         proc_entry.dwSize = size_of::<PROCESSENTRY32>() as u32;
@@ -204,7 +237,7 @@ fn get_process_id(process_name: &str) -> Result<u32, ToyArmsExternalError> {
             loop {
                 if Process32Next(snap_handle, &mut proc_entry) == FALSE {
                     if GetLastError() == 18 {
-                        return Err(ToyArmsExternalError::NoMoreFiles);
+                        return Err(TAExternalError::SnapshotFailed(SnapshotFailedDetail::NoMoreFiles));
                     }
                 }
                 if read_null_terminated_string(proc_entry.szExeFile.as_ptr() as usize).unwrap()
@@ -216,7 +249,7 @@ fn get_process_id(process_name: &str) -> Result<u32, ToyArmsExternalError> {
         }
         CloseHandle(snap_handle);
     }
-    Err(ToyArmsExternalError::ProcessNotFound)
+    Err(TAExternalError::ProcessNotFound)
 }
 
 fn get_process_handle(process_id: u32) -> HANDLE {
