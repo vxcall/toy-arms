@@ -129,7 +129,7 @@ fn main() {
   // This const has to be up to date.
   const DW_CLIENT_STATE: usize = 0x58CFC4;
   const DW_CLIENT_STATE_STATE: usize = 0x108;
-  const DW_FORCE_ATTACK: usize = 0x31FE33C;
+  const DW_FORCE_ATTACK: usize = 0x3202970;
   // Getting process information
   let process = Process::from_process_name("csgo.exe");
   println!(
@@ -282,7 +282,7 @@ fn main() {
   // This const has to be up to date.
   const DW_CLIENT_STATE: usize = 0x58CFC4;
   const DW_CLIENT_STATE_STATE: usize = 0x108;
-  const DW_FORCE_ATTACK: usize = 0x31FE33C;
+  const DW_FORCE_ATTACK: usize = 0x3202970;
   // Getting process information
   let process = Process::from_process_name("csgo.exe");
   println!(
@@ -330,7 +330,7 @@ therefore the buffer size will be 8bytes whereas the actual pointer is 4bytes. U
 use toy_arms::external::{Module, Process, read};
 use toy_arms::external::error::TAExternalError::ReadMemoryFailed;
 
-const DW_LOCAL_PLAYER: u32 = 0xDB35DC;
+const DW_LOCAL_PLAYER: u32 = 0xDB65DC;
 
 fn main() {
   let csgo: Process;

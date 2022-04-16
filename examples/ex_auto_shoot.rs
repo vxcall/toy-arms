@@ -13,7 +13,7 @@ fn main() {
     // This const has to be up to date.
     const DW_CLIENT_STATE: usize = 0x58CFC4;
     const DW_CLIENT_STATE_STATE: usize = 0x108;
-    const DW_FORCE_ATTACK: usize = 0x31FE33C;
+    const DW_FORCE_ATTACK: usize = 0x3202970;
     // Getting process information
     let process = Process::from_process_name("csgo.exe").unwrap();
     println!(

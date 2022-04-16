@@ -1,7 +1,7 @@
 use toy_arms::external::{Module, Process, read};
 use toy_arms::external::error::TAExternalError::ReadMemoryFailed;
 
-const DW_LOCAL_PLAYER: u32 = 0xDB35DC;
+const DW_LOCAL_PLAYER: u32 = 0xDB65DC;
 
 fn main() {
     let csgo: Process;

@@ -21,7 +21,7 @@ impl LocalPlayer {
 }
 
 // This offset has to be up to date.
-const DW_LOCAL_PLAYER: u32 = 0xDB35DC;
+const DW_LOCAL_PLAYER: u32 = 0xDB65DC;
 
 fn hack_main_thread() {
     let module = Module::from_module_name("client.dll").unwrap();

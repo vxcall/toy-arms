@@ -14,7 +14,7 @@ use toy_arms::internal::utils::get_module_handle;
 toy_arms::create_entrypoint!(hack_main_thread);
 
 // This offset has to be up to date.
-const DW_FORCE_ATTACK: usize = 0x31FE33C;
+const DW_FORCE_ATTACK: usize = 0x3202970;
 
 fn hack_main_thread() {
     let mut once = false;
