@@ -1,5 +1,4 @@
 use std::mem::{size_of, zeroed};
-use std::str::Utf8Error;
 use winapi::shared::minwindef::{DWORD, FARPROC, HMODULE, MAX_PATH};
 use winapi::um::libloaderapi::GetProcAddress;
 use winapi::um::processthreadsapi::GetCurrentProcess;
@@ -11,6 +10,7 @@ use crate::internal::{
     utils::get_module_handle,
     pattern_scan::boyer_moore_horspool,
 };
+use smartstring::alias::String;
 
 pub enum TAInternalError {
     GetAllModuleHandlesFailed,
@@ -60,18 +60,23 @@ impl<'a> Module<'a> {
 
     /// read fetches the value that given address is holding.
     /// * `base_address` - the address that is supposed to have the value you want
+    #[inline]
     pub fn read<T>(&self, address: u32) -> *mut T {
         cast!(mut self.module_handle as usize + address as usize, T)
     }
 
     /// read_string reads the string untill the null terminator that is in the given module
     /// * `address` - relative address of the head of the string.
-    pub fn read_string(&self, address: i32) -> Result<String, Utf8Error> {
-        unsafe { read_null_terminated_string(self.module_handle as usize + address as usize) }
+    #[inline]
+    pub fn read_string(&self, address: i32) -> Option<String> {
+        unsafe {
+            read_null_terminated_string(self.module_handle as usize + address as usize)
+        }
     }
 
     /// find_pattern scans over entire module and returns the address if there is matched byte pattern in module.
     /// * `pattern` - pattern string you're looking for. format: "8D 34 85 ? ? ? ? 89 15 ? ? ? ? 8B 41 08 8B 48 04 83 F9 FF"
+    #[inline]
     pub fn find_pattern(&self, pattern: &str) -> Option<usize> {
         let base = self.module_base_address;
         let end = self.module_base_address + self.module_size as usize;
@@ -82,6 +87,7 @@ impl<'a> Module<'a> {
     /// * `pattern` - pattern string you're looking for. format: "8D 34 85 ? ? ? ? 89 15 ? ? ? ? 8B 41 08 8B 48 04 83 F9 FF"
     /// * `offset` - offset of the address from pattern's base.
     /// * `extra` - offset of the address from dereferenced address.
+    #[inline]
     pub fn pattern_scan(&self, pattern: &str, offset: isize, extra: usize) -> Option<usize> {
         unsafe {
             let address = self.find_pattern(pattern)?;
@@ -130,12 +136,14 @@ pub fn pattern_scan_all_modules(pattern: &str) -> Option<(usize, String)> {
     }
 }
 
+#[inline]
 pub fn pattern_scan_specific_range(pattern: &str, start: usize, end: usize) -> Option<*mut u8> {
     unsafe { boyer_moore_horspool(pattern, start, end) }
 }
 
 /// * `module_name` - name of module that the desired function is in.
 /// * `function_name` - name of the function you want
+#[inline]
 pub unsafe fn get_module_function_address(
     module_name: &str,
     function_name: &str,

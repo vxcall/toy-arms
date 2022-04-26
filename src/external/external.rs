@@ -29,6 +29,7 @@ use crate::pattern_scan_common::is_page_readable;
 use super::error::{ReadWriteMemoryFailedDetail, TAExternalError, SnapshotFailedDetail };
 
 use crate::utils_common::read_null_terminated_string;
+use smartstring::alias::String;
 
 #[derive(Debug)]
 pub struct Module {
@@ -164,6 +165,7 @@ impl<'a> Default for Process<'a> {
 }
 
 impl<'a> Process<'a> {
+    #[inline]
     pub fn from_process_name(process_name: &'a str) -> Result<Self, TAExternalError> {
         let process_id = get_process_id(process_name)?;
         let process_handle = get_process_handle(process_id);
@@ -214,6 +216,7 @@ impl<'a> Process<'a> {
         }
     }
 
+    #[inline]
     pub fn get_module_base(&self, module_name: &str) -> Result<usize, TAExternalError> {
         let info: Module = self.get_module_info(module_name)?;
         Ok(info.module_base_address)
@@ -252,6 +255,7 @@ fn get_process_id(process_name: &str) -> Result<u32, TAExternalError> {
     Err(TAExternalError::ProcessNotFound)
 }
 
+#[inline]
 fn get_process_handle(process_id: u32) -> HANDLE {
     unsafe { OpenProcess(PROCESS_ALL_ACCESS, FALSE, process_id as u32) }
 }

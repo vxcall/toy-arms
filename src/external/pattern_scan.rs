@@ -11,7 +11,7 @@ pub(crate) unsafe fn boyer_moore_horspool(
     end: usize,
 ) -> Option<usize> {
     let pattern_vec = process_pattern_from_str(pattern);
-    let pattern = pattern_vec.as_slice();
+    let pattern = &pattern_vec;
 
     let right_most_wildcard_index = if let Some(x) = pattern.iter().rev().position(|&x| x == b'\x3F') {
          x

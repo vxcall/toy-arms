@@ -1,6 +1,6 @@
 //! pattern_scan_common has a common components which is referenced by external and internal variants of pattern scan mods.
 
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 use winapi::um::winnt::{MEM_COMMIT, MEMORY_BASIC_INFORMATION, PAGE_NOACCESS};
 
 pub(crate) fn is_page_readable(memory_info: &MEMORY_BASIC_INFORMATION) -> bool {
@@ -28,8 +28,8 @@ pub(crate) fn process_pattern_from_str(pattern: &str) -> Vec<u8> {
 }
 
 // build_bad_match_table returns the Hashmap that holds each byte and the corresponding number of how many bytes to skip.
-pub(crate) fn build_bad_match_table(pattern: &[u8], right_most_wildcard_index: usize) -> HashMap<&u8, usize> {
-    let mut bad_match_table = HashMap::new();
+pub(crate) fn build_bad_match_table(pattern: &[u8], right_most_wildcard_index: usize) -> FxHashMap<&u8, usize> {
+    let mut bad_match_table: FxHashMap<&u8, usize> = FxHashMap::default();
     let pattern_length = pattern.len();
     for (i, p) in pattern.iter().enumerate() {
         let table_value = (pattern_length as isize - i as isize - 2) as usize;

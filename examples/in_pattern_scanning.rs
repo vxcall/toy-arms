@@ -21,7 +21,7 @@ fn hack_main_thread() {
     let client = Module::from_module_name("client.dll").unwrap();
 
     match client.find_pattern(DW_FORCE_ATTACK_PATTERN) {
-        Some(i) => println!("address: 0x{:x}", i),
+        Some(i) => println!("*dwForceAttack address: 0x{:x}", i),
         None => println!("Pattern not found"),
     }
 
@@ -30,7 +30,7 @@ fn hack_main_thread() {
         2,
         0,
     ) {
-        Some(i) => println!("address: 0x{:x}", i),
+        Some(i) => println!("dwForceAttack address: 0x{:x}", i),
         None => println!("Offset not found"),
     }
 
