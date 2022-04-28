@@ -1,17 +1,17 @@
 use toy_arms::{ VirtualKeyCode };
-use toy_arms::external::Process;
+use toy_arms::external::process::Process;
 
-const DW_FORCE_ATTACK_PATTERN: &str = "8D 34 85 ? ? ? ? 89 15 ? ? ? ? 8B 41 08 8B 48 04 83 F9 FF";
+const DW_FORCE_ATTACK_PATTERN: &str = "89 0D ? ? ? ? 8B 0D ? ? ? ? 8B F2 8B C1 83 CE 04";
 
 fn main() {
     let mut once = false;
 
     // Getting process information
     let process = Process::from_process_name("csgo.exe").unwrap();
+
     // You can get module information by using get_client
     let client = process.get_module_info("client.dll").unwrap();
     println!("{:#?}", client);
-
 
     let address = client.find_pattern(DW_FORCE_ATTACK_PATTERN);
     match address {
@@ -19,7 +19,7 @@ fn main() {
         None => println!("NOTHING FOUND"),
     }
 
-    let offset = client.pattern_scan(
+    let offset = client.pattern_scan::<u32>(
         DW_FORCE_ATTACK_PATTERN,
         2,
         0,

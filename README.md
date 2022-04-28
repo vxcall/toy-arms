@@ -55,7 +55,7 @@ As of now toy-arms has 2 features which are `internal` and `external`.
 **for internal use:**
 ```toml
 [dependencies]
-toy-arms = "0.9.4"
+toy-arms = "0.9.5"
 
 # This annotation below is to tell the compiler to compile this into dll. MUST.
 [lib]
@@ -65,7 +65,7 @@ crate-type = ["cdylib"]
 **for external use:**
 ```toml
 [dependencies]
-toy-arms = {version = "0.9.4", features = ["external"]}
+toy-arms = {version = "0.9.5", features = ["external"]}
 ```
 
 ## step2

@@ -6,16 +6,16 @@ The offset DW_CLIENT_STATE, DW_CLIENT_STATE_STATE and DW_FORCE_ATTACK work as of
 */
 
 use toy_arms::VirtualKeyCode;
-use toy_arms::external::Process;
+use toy_arms::external::process;
 use toy_arms::external::{ read, write };
 
 fn main() {
     // This const has to be up to date.
-    const DW_CLIENT_STATE: usize = 0x58CFC4;
-    const DW_CLIENT_STATE_STATE: usize = 0x108;
-    const DW_FORCE_ATTACK: usize = 0x31FE33C;
+    const DW_CLIENT_STATE: u32 = 0x58CFC4;
+    const DW_CLIENT_STATE_STATE: u32 = 0x108;
+    const DW_FORCE_ATTACK: u32 = 0x31FE33C;
     // Getting process information
-    let process = Process::from_process_name("csgo.exe").unwrap();
+    let process = process::from_process_name("csgo.exe").unwrap();
     println!(
         "process id = {}, \nprocess handle = {:?}",
         process.process_id, process.process_handle
@@ -29,7 +29,7 @@ fn main() {
     // U have to specify the type of the value with turbofish
     println!(
         "{:x}",
-        read::<i32>(process.process_handle, read::<u32>(process.process_handle, process.get_module_base("engine.dll").unwrap() + DW_CLIENT_STATE).unwrap() as usize + DW_CLIENT_STATE_STATE).unwrap()
+        read::<i32>(process.process_handle, read::<u32>(process.process_handle, process.get_module_base("engine.dll").unwrap() + DW_CLIENT_STATE).unwrap() + DW_CLIENT_STATE_STATE).unwrap()
     );
 
     loop {

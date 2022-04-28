@@ -5,7 +5,7 @@ use crate::external::read;
 use crate::pattern_scan_common::{build_bad_match_table, is_page_readable, process_pattern_from_str};
 
 pub(crate) unsafe fn boyer_moore_horspool(
-    process_handle: HANDLE,
+    process_handle: &HANDLE,
     pattern: &str,
     start: usize,
     end: usize,
@@ -26,7 +26,7 @@ pub(crate) unsafe fn boyer_moore_horspool(
 
     while current < end {
         if current <= next_page_base {
-            VirtualQueryEx(process_handle, current as LPCVOID, &mut memory_info, std::mem::size_of::<MEMORY_BASIC_INFORMATION>());
+            VirtualQueryEx(*process_handle, current as LPCVOID, &mut memory_info, std::mem::size_of::<MEMORY_BASIC_INFORMATION>());
             next_page_base = memory_info.BaseAddress as usize + memory_info.RegionSize as usize;
             if !is_page_readable(&memory_info) {
                 current = memory_info.BaseAddress as usize

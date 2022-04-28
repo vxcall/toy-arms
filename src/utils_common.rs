@@ -1,13 +1,12 @@
-use smartstring::alias::String;
+use std::str::Utf8Error;
+
 #[inline]
-pub(crate) unsafe fn read_null_terminated_string(base_address: usize) -> Option<String> {
-    let mut name: Vec<u8> = Vec::with_capacity(20);
-    for i in 0.. {
-        let char_as_u8 = *(base_address as *const u8).offset(i);
-        if char_as_u8 == 0 {
-            return Some(name.iter().map(|&f| f as char).collect::<String>());
-        }
-        name.push(char_as_u8);
+pub(crate) unsafe fn read_null_terminated_string(base_address: usize) -> Result<String, Utf8Error> {
+    let len = (0..500).take_while(|&i| *(base_address as *const u8).offset(i) != 0 ).count();
+    let slice = std::slice::from_raw_parts(base_address as *const u8, len);
+
+    match String::from_utf8(slice.to_vec()) {
+        Ok(val) => Ok(val),
+        Err(e) => return Err(e.utf8_error())
     }
-    None
 }

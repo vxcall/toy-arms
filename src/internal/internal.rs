@@ -1,4 +1,5 @@
 use std::mem::{size_of, zeroed};
+use std::str::Utf8Error;
 use winapi::shared::minwindef::{DWORD, FARPROC, HMODULE, MAX_PATH};
 use winapi::um::libloaderapi::GetProcAddress;
 use winapi::um::processthreadsapi::GetCurrentProcess;
@@ -10,7 +11,6 @@ use crate::internal::{
     utils::get_module_handle,
     pattern_scan::boyer_moore_horspool,
 };
-use smartstring::alias::String;
 
 pub enum TAInternalError {
     GetAllModuleHandlesFailed,
@@ -68,7 +68,7 @@ impl<'a> Module<'a> {
     /// read_string reads the string untill the null terminator that is in the given module
     /// * `address` - relative address of the head of the string.
     #[inline]
-    pub fn read_string(&self, address: i32) -> Option<String> {
+    pub fn read_string(&self, address: i32) -> Result<String, Utf8Error> {
         unsafe {
             read_null_terminated_string(self.module_handle as usize + address as usize)
         }
