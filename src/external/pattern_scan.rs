@@ -32,7 +32,6 @@ pub mod module {
         {
             let address = self.find_pattern(pattern)?;
             let address = address + offset;
-            println!("0x{:x}", address);
             let mut target_buffer: T = unsafe { zeroed::<T>() };
             read::<T>(self.process_handle, self.module_base_address + address, size_of::<T>(), &mut target_buffer as *mut T).expect("READ FAILED IN PATTERN SCAN");
             Some( target_buffer - self.module_base_address.try_into().unwrap() + extra.try_into().unwrap())

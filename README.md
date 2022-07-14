@@ -438,3 +438,6 @@ To build examples in x86 arch:
 ```shell
 cargo build --example EXAMPLE_NAME --target i686-pc-windows-msvc
 ```
+
+# Acknowledge
+[hazedumper-rs](https://github.com/frk1/hazedumper-rs) - referenced as role model of pattern scan

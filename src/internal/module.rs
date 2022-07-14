@@ -5,7 +5,6 @@ use winapi::shared::minwindef::HMODULE;
 use winapi::um::processthreadsapi::GetCurrentProcess;
 use winapi::um::psapi::{GetModuleInformation, MODULEINFO};
 use crate::cast;
-use crate::internal::pattern_scan::boyer_moore_horspool;
 use crate::internal::utils::get_module_handle;
 use crate::utils_common::read_null_terminated_string;
 
@@ -64,8 +63,8 @@ impl<'a> Module<'a> {
     /// read fetches the value that given address is holding.
     /// * `base_address` - the address that is supposed to have the value you want
     #[inline]
-    pub fn read<T>(&self, address: u32) -> *mut T {
-        cast!(mut self.module_handle as usize + address as usize, T)
+    pub fn read<T>(&self, address: usize) -> *mut T {
+        cast!(mut self.module_base_address as usize + address as usize, T)
     }
 
     /// read_string reads the string untill the null terminator that is in the given module
@@ -77,26 +76,4 @@ impl<'a> Module<'a> {
         }
     }
 
-    /// find_pattern scans over entire module and returns the address if there is matched byte pattern in module.
-    /// * `pattern` - pattern string you're looking for. format: "8D 34 85 ? ? ? ? 89 15 ? ? ? ? 8B 41 08 8B 48 04 83 F9 FF"
-    #[inline]
-    pub fn find_pattern(&self, pattern: &str) -> Option<usize> {
-        let base = self.module_base_address;
-        let end = self.module_base_address + self.module_size as usize;
-        unsafe { boyer_moore_horspool(pattern, base, end).map(|e| e as usize) }
-    }
-
-    /// pattern scan basically be for calculating offset of some value. It adds the offset to the pattern-matched address, dereferences, and add the `extra`.
-    /// * `pattern` - pattern string you're looking for. format: "8D 34 85 ? ? ? ? 89 15 ? ? ? ? 8B 41 08 8B 48 04 83 F9 FF"
-    /// * `offset` - offset of the address from pattern's base.
-    /// * `extra` - offset of the address from dereferenced address.
-    #[inline]
-    pub fn pattern_scan(&self, pattern: &str, offset: isize, extra: usize) -> Option<usize> {
-        unsafe {
-            let address = self.find_pattern(pattern)?;
-            let address = (address as *mut u8).offset(offset) as *mut usize;
-            // calculate relative address
-            Some(*address - self.module_base_address + extra)
-        }
-    }
 }
