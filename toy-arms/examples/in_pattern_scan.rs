@@ -16,18 +16,18 @@ fn hack_main_thread() {
     let mut client = Module::from_name("client.dll").unwrap();
 
     match client.find_pattern(DW_FORCE_ATTACK_PATTERN) {
-        Some(i) => println!("*dwForceAttack address: 0x{:x}", i),
-        None => println!("Pattern not found"),
+        Some(i) => println!("[+] *dwForceAttack address: 0x{:x}", i),
+        None => println!("[-] Pattern not found"),
     }
 
     match client.pattern_scan(DW_FORCE_ATTACK_PATTERN, 2, 0) {
-        Some(i) => println!("dwForceAttack address: 0x{:x}", i),
-        None => println!("Offset not found"),
+        Some(i) => println!("[+] dwForceAttack address: 0x{:x}", i),
+        None => println!("[-] Offset not found"),
     }
 
     loop {
         if !once {
-            println!("Press INSERT to exit...");
+            println!("[+] Press INSERT to exit...");
             once = !once;
         }
         // To exit this hack loop when you input INSEERT KEY

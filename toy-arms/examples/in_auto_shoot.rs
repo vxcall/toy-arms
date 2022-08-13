@@ -14,7 +14,7 @@ use winapi::shared::minwindef::HMODULE;
 internal::create_entrypoint!(hack_main_thread);
 
 // This offset has to be up to date.
-const DW_FORCE_ATTACK: usize = 0x3207FE8;
+const DW_FORCE_ATTACK: usize = 0x320BDE8;
 
 fn hack_main_thread() {
     let mut once = false;

@@ -26,9 +26,9 @@ use winapi::um::wow64apiset::IsWow64Process;
 
 #[derive(Debug)]
 pub struct Process<'a> {
-    pub process_name: &'a str,
-    pub process_id: u32,
-    pub process_handle: HANDLE,
+    pub name: &'a str,
+    pub id: u32,
+    pub handle: HANDLE,
 }
 
 impl<'a> fmt::Display for Process<'a> {
@@ -36,7 +36,7 @@ impl<'a> fmt::Display for Process<'a> {
         write!(
             f,
             "process_name: {}\nprocess_id: {}\nprocess_handle: {:?}",
-            self.process_name, self.process_id, self.process_handle
+            self.name, self.id, self.handle
         )
     }
 }
@@ -44,9 +44,9 @@ impl<'a> fmt::Display for Process<'a> {
 impl<'a> Default for Process<'a> {
     fn default() -> Self {
         Process {
-            process_name: "",
-            process_id: 0,
-            process_handle: 0x0 as HANDLE,
+            name: "",
+            id: 0,
+            handle: 0x0 as HANDLE,
         }
     }
 }
@@ -59,9 +59,9 @@ impl<'a> Process<'a> {
         let mut is_wow64: BOOL = 0;
         Process::is_wow64_process(&process_handle, &mut is_wow64);
         Ok(Process {
-            process_name,
-            process_id,
-            process_handle,
+            name: process_name,
+            id: process_id,
+            handle: process_handle,
         })
     }
 
@@ -72,7 +72,7 @@ impl<'a> Process<'a> {
     pub fn get_module_info(&self, module_name: &'a str) -> Result<Module, TAExternalError> {
         unsafe {
             let snap_handle =
-                CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, self.process_id);
+                CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, self.id);
             if snap_handle == INVALID_HANDLE_VALUE {
                 return Err(TAExternalError::SnapshotFailed(
                     SnapshotFailedDetail::InvalidHandle,
@@ -85,7 +85,7 @@ impl<'a> Process<'a> {
                     == module_name
                 {
                     return Module::from_module_entry(
-                        self.process_handle,
+                        self.handle,
                         &module_entry,
                         module_name,
                     );
@@ -102,7 +102,7 @@ impl<'a> Process<'a> {
                         == module_name
                     {
                         return Module::from_module_entry(
-                            self.process_handle,
+                            self.handle,
                             &module_entry,
                             module_name,
                         );

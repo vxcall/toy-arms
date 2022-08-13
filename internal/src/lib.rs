@@ -34,6 +34,9 @@ pub fn pattern_scan_all_modules(pattern: &str) -> Option<(usize, String)> {
         } else {
             return None;
         };
+        for a in 0..20000 {
+            println!("{}", a);
+        }
         if let Some(e) = module.find_pattern(pattern) {
             return Some((e as usize, module.name.to_string()));
         } else {

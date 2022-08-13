@@ -32,11 +32,11 @@ I'd be pleased if you help me improve toy-arms by spotting them and open PR or i
     - [simplest dll](#simplest-dll-internal)
     - [auto shoot](#auto-shoot-internal)
     - [get localplayer health](#get-localplayer-health-internal)
-    - [pattern scanning](#pattern-scanning-internal)
+    - [pattern scang](#pattern-scan-internal)
   - [external](#external)
     - [auto shoot](#auto-shoot-external)
     - [get localpalyer health](#get-localplayer-health-external)
-    - [pattern scanning](#pattern-scanning-external)
+    - [pattern scan](#pattern-scan-external)
 - [:card_file_box: Other examples?](#card_file_box-other-examples)
 
 # :two_hearts: support me
@@ -176,7 +176,7 @@ fn main() {
 While this code below will retrieve health value of LocalPlayer object in csgo.exe.
 Note that you have to update the offset of `DW_LOCAL_PLAYER`.
 
-`cargo b --example in_localplayer_health --target i686-pc-windows-msvc`
+`cargo b --example in_get_localplayer_health --target i686-pc-windows-msvc`
 
 ```rust
 use toy_arms::GameObject;
@@ -218,11 +218,11 @@ fn hack_main_thread() {
 
 ```
 
-### pattern scanning (internal)
+### pattern scan (internal)
 
 This is the pattern scanning example where the pattern is for dwForceAttack in csgo.
 
-`cargo b --example in_pattern_scanning --target i686-pc-windows-msvc`
+`cargo b --example in_pattern_scan --target i686-pc-windows-msvc`
 
 ```rust
 use toy_arms::{
@@ -377,11 +377,11 @@ fn main() {
 }
 ```
 
-### pattern scanning (external)
+### pattern scan (external)
 
 This is the pattern scanning example where the pattern is for dwForceAttack in csgo.
 
-`cargo r --example ex_pattern_scanning --features external --no-default-features`
+`cargo r --example ex_pattern_scan --features external --no-default-features`
 
 ```rust
 use toy_arms::{ VirtualKeyCode };
@@ -438,6 +438,40 @@ To build examples in x86 arch:
 ```shell
 cargo build --example EXAMPLE_NAME --target i686-pc-windows-msvc
 ```
+
+# API info
+
+### external `read()` func
+
+```rs
+fn read<T>(
+    process_handle: &HANDLE,
+    base_address: usize,
+    size: usize,
+    buffer: *mut T,
+)
+```
+
+make sure to pass buffer like following:
+
+```rs
+let mut buffer: u32 = 0; // Declare with mut keyword
+read::<u32>(
+    &handle,
+    base_address,
+    size_of::<u32>(),
+    &mut buffer as *mut u32, // Must be the form of &mut buffer as *mut T
+    // These are equivalent to &buffer in C++.
+);
+```
+
+### internal `read()` func and `cast!()` macro
+
+in the example, both of them are used conditionally. They are present for different use.
+
+`cast!()` is the basic dereference and u can always use this of course.
+
+`read()` is the member method of Module struct. It allows u to just pass the offset of what u want from module base, and it adds them for you. `cast!()` is used under the hood.
 
 # Acknowledge
 [hazedumper-rs](https://github.com/frk1/hazedumper-rs) - referenced as role model of pattern scan
