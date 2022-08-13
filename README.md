@@ -74,6 +74,11 @@ target = "i686-pc-windows-msvc"
 
 Or put `--target i686-pc-windows-msvc` flag everytime when you build the code.
 
+If you don't have toolchain for 32bit msvc, do following
+```shell
+ rustup target add i686-pc-windows-msvc 
+```
+
 # :scroll: Practical Examples
 
 In this section I'll showcase you various examples for different situations with internal and external features. Find one fits your purpose.
@@ -427,3 +432,6 @@ To build examples in x86 arch:
 ```shell
 cargo build --example EXAMPLE_NAME --target i686-pc-windows-msvc
 ```
+
+# Acknowledge
+[hazedumper-rs](https://github.com/frk1/hazedumper-rs) - referenced as role model of pattern scan
