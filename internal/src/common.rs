@@ -35,29 +35,29 @@ macro_rules! create_entrypoint {
         #[no_mangle]
         #[allow(non_snake_cake)]
         extern "system" fn DllMain(
-            h_module: $crate::utils::HINSTANCE,
+            h_module: $crate::common::HINSTANCE,
             dw_reason: u32,
             _: *const ::std::ffi::c_void,
-        ) -> $crate::utils::BOOL {
-            if dw_reason == $crate::utils::DLL_PROCESS_ATTACH {
+        ) -> $crate::common::BOOL {
+            if dw_reason == $crate::common::DLL_PROCESS_ATTACH {
                 unsafe {
-                    $crate::utils::DisableThreadLibraryCalls(h_module);
+                    $crate::common::DisableThreadLibraryCalls(h_module);
                 }
                 ::std::thread::spawn(|| {
                     if cfg!(debug_assertions) {
                         unsafe {
-                            $crate::utils::AllocConsole();
+                            $crate::common::AllocConsole();
                         }
                     }
                     $function();
                     if cfg!(debug_assertions) {
                         unsafe {
-                            $crate::utils::FreeConsole();
+                            $crate::common::FreeConsole();
                         }
                     }
                 });
             }
-            $crate::utils::TRUE
+            $crate::common::TRUE
         }
     };
 }

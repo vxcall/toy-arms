@@ -1,23 +1,18 @@
 #![doc(html_logo_url = "https://svgshare.com/i/cF0.svg")]
 
-#[doc(inline)]
-pub use toy_arms::keyboard::*;
-
-pub mod utils;
+pub mod common;
 
 pub mod pattern_scan;
 
 pub mod module;
 
+use crate::module::Module;
+use common::get_module_handle;
 use std::mem::size_of;
-use winapi::shared::minwindef::{DWORD, FARPROC, HMODULE, MAX_PATH};
+use winapi::shared::minwindef::{DWORD, FARPROC, HMODULE};
 use winapi::um::libloaderapi::GetProcAddress;
 use winapi::um::processthreadsapi::GetCurrentProcess;
-use winapi::um::psapi::{EnumProcessModules, GetModuleBaseNameA, GetModuleInformation, MODULEINFO};
-use winapi::um::winnt::{CHAR, LPSTR};
-use toy_arms::utils::read_null_terminated_string;
-use crate::module::Module;
-use crate::utils::get_module_handle;
+use winapi::um::psapi::EnumProcessModules;
 
 pub enum TAInternalError {
     GetAllModuleHandlesFailed,
@@ -32,19 +27,20 @@ pub trait GameObject {
 /// * `offset` - offset of the address from pattern's base.
 /// * `extra` - offset of the address from dereferenced address.
 pub fn pattern_scan_all_modules(pattern: &str) -> Option<(usize, String)> {
-    unsafe {
-        let all_handles = get_all_module_handles().ok()?;
-        let process_handle = GetCurrentProcess();
-        for handle in all_handles {
-            let module: Module = if let Some(e) = Module::from_handle(handle) {e} else {return None};
-            if let Some(e) = module.find_pattern(pattern) {
-                return Some((e as usize, module.name.to_string()))
-            } else {
-                continue;
-            }
+    let all_handles = get_all_module_handles().ok()?;
+    for handle in all_handles {
+        let module: Module = if let Some(e) = Module::from_handle(handle) {
+            e
+        } else {
+            return None;
+        };
+        if let Some(e) = module.find_pattern(pattern) {
+            return Some((e as usize, module.name.to_string()));
+        } else {
+            continue;
         }
-        None
     }
+    None
 }
 
 // #[inline]
@@ -65,7 +61,7 @@ pub unsafe fn get_module_function_address(
     };
     Some(GetProcAddress(
         module_handle,
-        crate::utils::make_lpcstr(function_name),
+        common::make_lpcstr(function_name),
     ))
 }
 

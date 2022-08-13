@@ -5,10 +5,7 @@ The model pattern is for dwForceAttack.
 */
 
 use internal::module::Module;
-use toy_arms::keyboard::{
-    detect_keypress,
-    VirtualKeyCode,
-};
+use toy_arms::utils::keyboard::{detect_keypress, VirtualKeyCode};
 internal::create_entrypoint!(hack_main_thread);
 
 const DW_FORCE_ATTACK_PATTERN: &str = "89 0D ? ? ? ? 8B 0D ? ? ? ? 8B F2 8B C1 83 CE 04";
@@ -23,11 +20,7 @@ fn hack_main_thread() {
         None => println!("Pattern not found"),
     }
 
-    match client.pattern_scan(
-        DW_FORCE_ATTACK_PATTERN,
-        2,
-        0,
-    ) {
+    match client.pattern_scan(DW_FORCE_ATTACK_PATTERN, 2, 0) {
         Some(i) => println!("dwForceAttack address: 0x{:x}", i),
         None => println!("Offset not found"),
     }

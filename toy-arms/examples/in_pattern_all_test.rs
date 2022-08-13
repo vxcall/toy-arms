@@ -1,5 +1,5 @@
 use internal::pattern_scan_all_modules;
-use toy_arms::keyboard::VirtualKeyCode;
+use toy_arms::utils::keyboard::VirtualKeyCode;
 
 internal::create_entrypoint!(hack_main);
 
@@ -25,7 +25,7 @@ fn hack_main() {
             println!("Press INSERT to exit...");
             once = !once;
         }
-        if toy_arms::keyboard::detect_keypress(VirtualKeyCode::VK_INSERT) {
+        if toy_arms::utils::keyboard::detect_keypress(VirtualKeyCode::VK_INSERT) {
             break;
         }
     }

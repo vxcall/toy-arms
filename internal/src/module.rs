@@ -1,3 +1,7 @@
+use crate::common::get_module_handle;
+use crate::cast;
+use utils::utils::read_null_terminated_string;
+use smartstring::alias::String;
 use std::mem::{size_of, zeroed};
 use std::ptr::copy_nonoverlapping;
 use std::str::Utf8Error;
@@ -5,10 +9,6 @@ use winapi::shared::minwindef::{DWORD, HMODULE, MAX_PATH};
 use winapi::um::processthreadsapi::GetCurrentProcess;
 use winapi::um::psapi::{GetModuleBaseNameA, GetModuleInformation, MODULEINFO};
 use winapi::um::winnt::{CHAR, LPSTR};
-use crate::cast;
-use super::utils::get_module_handle;
-use toy_arms::utils::read_null_terminated_string;
-use smartstring::alias::String;
 
 #[derive(Debug)]
 pub struct Module {
@@ -45,10 +45,14 @@ impl Module {
                 &mut module_info,
                 size_of::<MODULEINFO>() as u32,
             );
-            let mut data:Vec<u8> = Vec::with_capacity(module_info.SizeOfImage as usize);
+            let mut data: Vec<u8> = Vec::with_capacity(module_info.SizeOfImage as usize);
             let data_ptr = data.as_mut_ptr();
             data.set_len(0);
-            copy_nonoverlapping(module_info.lpBaseOfDll as *const u8, data_ptr, module_info.SizeOfImage as usize);
+            copy_nonoverlapping(
+                module_info.lpBaseOfDll as *const u8,
+                data_ptr,
+                module_info.SizeOfImage as usize,
+            );
             data.set_len(module_info.SizeOfImage as usize);
 
             let module = Module {
@@ -84,10 +88,14 @@ impl Module {
             let module_name =
                 read_null_terminated_string(&mut name_buffer as *mut i8 as usize).unwrap();
 
-            let mut data:Vec<u8> = Vec::with_capacity(module_info.SizeOfImage as usize);
+            let mut data: Vec<u8> = Vec::with_capacity(module_info.SizeOfImage as usize);
             let data_ptr = data.as_mut_ptr();
             data.set_len(0);
-            copy_nonoverlapping(module_info.lpBaseOfDll as *const u8, data_ptr, module_info.SizeOfImage as usize);
+            copy_nonoverlapping(
+                module_info.lpBaseOfDll as *const u8,
+                data_ptr,
+                module_info.SizeOfImage as usize,
+            );
             data.set_len(module_info.SizeOfImage as usize);
 
             let module = Module {
@@ -112,9 +120,6 @@ impl Module {
     /// * `address` - relative address of the head of the string.
     #[inline]
     pub fn read_string(&self, address: i32) -> Result<std::string::String, Utf8Error> {
-        unsafe {
-            read_null_terminated_string(self.handle as usize + address as usize)
-        }
+        unsafe { read_null_terminated_string(self.handle as usize + address as usize) }
     }
-
 }

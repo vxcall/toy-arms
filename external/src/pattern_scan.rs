@@ -4,10 +4,10 @@ pub mod module {
     use std::mem::zeroed;
     use std::mem::size_of;
     use regex::bytes::Regex;
-    use crate::external::read;
+    use crate::read;
     use crate::module::Module;
 
-    impl<'a> Module<'a> {
+    impl Module {
         fn generate_regex(&self, pattern: &str) -> Option<Regex> {
             let mut regex = pattern
                 .split_whitespace()
@@ -33,8 +33,8 @@ pub mod module {
             let address = self.find_pattern(pattern)?;
             let address = address + offset;
             let mut target_buffer: T = unsafe { zeroed::<T>() };
-            read::<T>(self.process_handle, self.module_base_address + address, size_of::<T>(), &mut target_buffer as *mut T).expect("READ FAILED IN PATTERN SCAN");
-            Some( target_buffer - self.module_base_address.try_into().unwrap() + extra.try_into().unwrap())
+            read::<T>(&self.process_handle, self.base_address + address, size_of::<T>(), &mut target_buffer as *mut T).expect("READ FAILED IN PATTERN SCAN");
+            Some( target_buffer - self.base_address.try_into().unwrap() + extra.try_into().unwrap())
         }
     }
 }

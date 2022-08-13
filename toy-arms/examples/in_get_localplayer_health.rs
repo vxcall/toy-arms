@@ -3,10 +3,11 @@ This example is the demonstration of getting player health with toy-arms interna
 Make sure that you inject this image to csgo.exe.
 also, the offset of DW_LOCAL_PLAYER works as of the day i wrote this but it might not be up to date in your case.
 */
-use internal::{cast, VirtualKeyCode};
 use internal::module::Module;
 use internal::GameObject;
-use toy_arms_derive::GameObject;
+use internal::cast;
+use utils::keyboard::VirtualKeyCode;
+use toy_arms::derive::GameObject;
 
 internal::create_entrypoint!(hack_main_thread);
 
@@ -17,7 +18,9 @@ struct LocalPlayer {
 }
 
 impl LocalPlayer {
-    unsafe fn get_health(&self) -> u16 { *cast!(self.pointer as usize + 0x100, u16) }
+    unsafe fn get_health(&self) -> u16 {
+        *cast!(self.pointer as usize + 0x100, u16)
+    }
 }
 
 // This offset has to be up to date.
@@ -31,7 +34,7 @@ fn hack_main_thread() {
             if let Some(i) = LocalPlayer::from_raw(module.read(DW_LOCAL_PLAYER as usize)) {
                 println!("health = {:?}", (*i).get_health());
             };
-            if toy_arms::keyboard::detect_keypress(VirtualKeyCode::VK_INSERT) {
+            if toy_arms::utils::keyboard::detect_keypress(VirtualKeyCode::VK_INSERT) {
                 break;
             }
         }

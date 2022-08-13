@@ -5,11 +5,11 @@ Then read the value called dwForceAttack and overwrite it to make player shoot.
 The offset DW_FORCE_ATTACK works as of the day i wrote this but it might not be up to date in your case.
 */
 
+use toy_arms::internal::cast;
+use toy_arms::utils::detect_keydown;
+use toy_arms::utils::keyboard::{detect_keypress, VirtualKeyCode};
+use internal::common::get_module_handle;
 use winapi::shared::minwindef::HMODULE;
-use toy_arms::keyboard::{detect_keypress, VirtualKeyCode};
-use internal::cast;
-use internal::utils::get_module_handle;
-use toy_arms::detect_keydown;
 
 internal::create_entrypoint!(hack_main_thread);
 
