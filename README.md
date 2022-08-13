@@ -13,13 +13,7 @@ Huge thanks to my pal for this header [@suzuharuR](https://twitter.com/suzuharuR
 </div>
 
 # What's toy-arms?
-This is a toolkit for those who are fed up with coding game hack with C++ but still wanna make it in an elegant way.
-Since this library wraps many Windows API which frequently used, you can build hack without having to struggle with it.
-By using this, many part of your stress while coding low level fashion won't come in.
-
-# Please note
-With that being said, since I'm neither a pro rust coder nor a pro game hacker, this library isn't mature at all and still might contain lots of buggy code which causes unintentional behavior.
-I'd be pleased if you help me improve toy-arms by spotting them and open PR or issue.
+This library is meant to be created to try rust's capability for game hack use. Consider this as my training of rust, can't guarantee the quality of the code. long story short, windows api wrapper to ease hack development.
 
 # :pushpin: Table of contents
 
