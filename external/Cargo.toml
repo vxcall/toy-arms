@@ -1,0 +1,12 @@
+[package]
+name = "external"
+version = "0.9.5"
+edition = "2021"
+
+[dependencies]
+winapi = { version = "0.3.9", features = ["minwindef", "memoryapi", "winnt",
+    "tlhelp32", "handleapi", "processthreadsapi", "impl-default", "errhandlingapi", "basetsd", "wow64apiset"] }
+utils = {package = "toy-arms_utils", path = "../toy-arms_utils"}
+thiserror = "1.0.30"
+smartstring = "0.2.9"
+regex = "1.5.5"
