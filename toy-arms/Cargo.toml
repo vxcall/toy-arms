@@ -1,6 +1,6 @@
 [package]
 name = "toy-arms"
-version = "0.9.5"
+version = "0.9.6"
 edition = "2021"
 authors = ["s3pt3mb3r <s3pt3mb3r@protonmail.com>"]
 description = "A crates designed to ease game hacking in rust."
@@ -36,10 +36,6 @@ crate-type = ["cdylib"]
 
 [[example]]
 name = "in_get_localplayer_health"
-crate-type = ["cdylib"]
-
-[[example]]
-name = "in_pattern_scan_all"
 crate-type = ["cdylib"]
 
 [[example]]

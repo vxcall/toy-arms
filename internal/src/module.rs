@@ -1,14 +1,16 @@
-use crate::common::get_module_handle;
 use crate::cast;
-use utils::utils::read_null_terminated_string;
+use crate::common::get_module_handle;
 use smartstring::alias::String;
 use std::mem::{size_of, zeroed};
 use std::ptr::copy_nonoverlapping;
 use std::str::Utf8Error;
-use winapi::shared::minwindef::{DWORD, HMODULE, MAX_PATH};
+use utils::pattern_scan::is_page_readable;
+use utils::utils::read_null_terminated_string;
+use winapi::shared::minwindef::{DWORD, HMODULE, LPCVOID, LPVOID, MAX_PATH};
+use winapi::um::memoryapi::{VirtualProtect, VirtualQuery};
 use winapi::um::processthreadsapi::GetCurrentProcess;
 use winapi::um::psapi::{GetModuleBaseNameA, GetModuleInformation, MODULEINFO};
-use winapi::um::winnt::{CHAR, LPSTR};
+use winapi::um::winnt::{CHAR, LPSTR, MEMORY_BASIC_INFORMATION, PAGE_READWRITE};
 
 #[derive(Debug)]
 pub struct Module {
@@ -67,6 +69,9 @@ impl Module {
     }
 
     pub fn from_handle(handle: HMODULE) -> Option<Self> {
+        use std::{thread, time};
+        println!("entered");
+        let ten_millis = time::Duration::from_secs(3);
         unsafe {
             let mut module_info: MODULEINFO = zeroed::<MODULEINFO>();
             let process_handle = GetCurrentProcess();
@@ -97,6 +102,8 @@ impl Module {
                 module_info.SizeOfImage as usize,
             );
             data.set_len(module_info.SizeOfImage as usize);
+            println!("done copy nonoverlapping");
+            thread::sleep(ten_millis);
 
             let module = Module {
                 name: String::from(module_name),
@@ -113,7 +120,39 @@ impl Module {
     /// * `base_address` - the address that is supposed to have the value you want
     #[inline]
     pub fn read<T>(&self, address: usize) -> *mut T {
-        cast!(mut self.base_address as usize + address as usize, T)
+        let mut memory_info: MEMORY_BASIC_INFORMATION = MEMORY_BASIC_INFORMATION::default();
+        unsafe {
+            VirtualQuery(
+                (self.base_address + address) as LPCVOID,
+                &mut memory_info,
+                std::mem::size_of::<MEMORY_BASIC_INFORMATION>(),
+            );
+        }
+        let is_readable = is_page_readable(&memory_info);
+        let mut old_protect = PAGE_READWRITE;
+        let mut new_protect = PAGE_READWRITE;
+        if !is_readable {
+            unsafe {
+                VirtualProtect(
+                    (self.base_address + address) as LPVOID,
+                    std::mem::size_of::<LPVOID>(),
+                    new_protect,
+                    &mut old_protect as *mut DWORD,
+                );
+            }
+        }
+        let result = cast!(mut self.base_address + address, T);
+        if !is_readable {
+            unsafe {
+                VirtualProtect(
+                    (self.base_address + address) as LPVOID,
+                    std::mem::size_of::<LPVOID>(),
+                    old_protect,
+                    &mut new_protect as *mut DWORD,
+                );
+            }
+        }
+        result
     }
 
     /// read_string reads the string untill the null terminator that is in the given module

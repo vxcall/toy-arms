@@ -26,7 +26,8 @@ pub trait GameObject {
 /// * `pattern` - pattern string you're looking for. format: "8D 34 85 ? ? ? ? 89 15 ? ? ? ? 8B 41 08 8B 48 04 83 F9 FF"
 /// * `offset` - offset of the address from pattern's base.
 /// * `extra` - offset of the address from dereferenced address.
-pub fn pattern_scan_all_modules(pattern: &str) -> Option<(usize, String)> {
+#[allow(dead_code)]
+fn pattern_scan_all_modules(pattern: &str) -> Option<(usize, String)> {
     let all_handles = get_all_module_handles().ok()?;
     for handle in all_handles {
         let module: Module = if let Some(e) = Module::from_handle(handle) {
@@ -34,9 +35,6 @@ pub fn pattern_scan_all_modules(pattern: &str) -> Option<(usize, String)> {
         } else {
             return None;
         };
-        for a in 0..20000 {
-            println!("{}", a);
-        }
         if let Some(e) = module.find_pattern(pattern) {
             return Some((e as usize, module.name.to_string()));
         } else {
