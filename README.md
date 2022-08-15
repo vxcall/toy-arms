@@ -26,12 +26,13 @@ This library is meant to be created to try rust's capability for game hack use. 
     - [simplest dll](#simplest-dll-internal)
     - [auto shoot](#auto-shoot-internal)
     - [get localplayer health](#get-localplayer-health-internal)
-    - [pattern scanning](#pattern-scanning-internal)
+    - [pattern scang](#pattern-scan-internal)
   - [external](#external)
     - [auto shoot](#auto-shoot-external)
     - [get localpalyer health](#get-localplayer-health-external)
-    - [pattern scanning](#pattern-scanning-external)
+    - [pattern scan](#pattern-scan-external)
 - [:card_file_box: Other examples?](#card_file_box-other-examples)
+- [:herb: API info](#herb-api-info)
 
 # :two_hearts: support me
 **Donating me through GitHub sponsors** would be the best way to support me and this project.
@@ -50,7 +51,7 @@ As of now toy-arms has 2 features which are `internal` and `external`.
 **for internal use:**
 ```toml
 [dependencies]
-toy-arms = "0.9.5"
+toy-arms = {git = "version = "https://github.com/pseuxide/toy-arms"}
 
 # This annotation below is to tell the compiler to compile this into dll. MUST.
 [lib]
@@ -60,7 +61,7 @@ crate-type = ["cdylib"]
 **for external use:**
 ```toml
 [dependencies]
-toy-arms = {version = "0.9.5", features = ["external"]}
+toy-arms = {git = "https://github.com/pseuxide/toy-arms", features = ["external"]}
 ```
 
 ## step2
@@ -99,18 +100,21 @@ With this crate, making the injectable dll which is the smallest possible is sim
 `cargo b --example in_simplest_dll --target i686-pc-windows-msvc`
 
 ```rust
+/*
+This is the demonstration of how to make the simplest hack with toy-arms.
+*/
 // A neat macro which defines entry point instead of you.
 // Also, you dont have to alloc/free console by yourself, console will show up when u compile into debug build.
-toy_arms::create_entrypoint!(hack_main_thread);
+
+internal::create_entrypoint!(hack_main_thread);
 
 // Main thread
 fn hack_main_thread() {
-  // YOUR STUNNING CODE'S SUPPOSED TO BE HERE;
-  for i in 0..30000 {
-    println!("using toy-arms {}", i);
-  }
+    // YOUR STUNNING CODE'S SUPPOSED TO BE HERE;
+    for i in 0..30000 {
+        println!("using toy-arms {}", i);
+    }
 }
-
 ```
 
 ### auto shoot (internal)
@@ -121,47 +125,54 @@ Note that you have to check if the address of `DW_FORCE_ATTACK` is up-to-date.
 `cargo b --example in_auto_shoot --target i686-pc-windows-msvc`
 
 ```rust
-use toy_arms::VirtualKeyCode;
-use toy_arms::external::Process;
-use toy_arms::external::{ read, write };
+/*
+This is the demonstration of how to use internal analysis feature in toy-arms.
+This code gets module handle and function address of the func called MessageBoxA as an example.
+Then read the value called dwForceAttack and overwrite it to make player shoot.
+The offset DW_FORCE_ATTACK works as of the day i wrote this but it might not be up to date in your case.
+*/
 
-fn main() {
-  // This const has to be up to date.
-  const DW_CLIENT_STATE: usize = 0x58CFC4;
-  const DW_CLIENT_STATE_STATE: usize = 0x108;
-  const DW_FORCE_ATTACK: usize = 0x31FE33C;
-  // Getting process information
-  let process = Process::from_process_name("csgo.exe");
-  println!(
-    "process id = {}, \nprocess handle = {:?}",
-    process.process_id, process.process_handle
-  );
+use toy_arms::internal::cast;
+use toy_arms::utils::detect_keydown;
+use toy_arms::utils::keyboard::{detect_keypress, VirtualKeyCode};
+use internal::common::get_module_handle;
+use winapi::shared::minwindef::HMODULE;
 
-  // You can get module information by using get_module_info
-  let module_info = process.get_module_info("client.dll").unwrap();
-  println!("{}", module_info.module_name);
+internal::create_entrypoint!(hack_main_thread);
 
-  // read fetches the value at where the address is pointing.
-  // U have to specify the type of the value with turbofish
-  println!(
-    "{:x}",
-    read::<i32>(process.process_handle, read::<u32>(process.process_handle, process.get_module_base("engine.dll").unwrap() + DW_CLIENT_STATE).unwrap() as usize + DW_CLIENT_STATE_STATE).unwrap()
-  );
+// This offset has to be up to date.
+const DW_FORCE_ATTACK: usize = 0x320BDE8;
 
-  loop {
-    // write helps you tamper with the value.
-    write::<u32>(
-      process.process_handle,
-      process.get_module_base("client.dll").unwrap() + DW_FORCE_ATTACK as usize,
-      &mut 0x5,
-    )
-            .unwrap();
+fn hack_main_thread() {
+    let mut once = false;
 
-    // Exit this loop by pressing INSERT
-    if toy_arms::detect_keypress(VirtualKeyCode::VK_INSERT) {
-      break;
+    // Gets module handle
+    let module_handle: HMODULE = get_module_handle("client.dll").unwrap();
+    println!("module handle = {:?}", module_handle as usize);
+
+    let shoot_flag = cast!(mut module_handle as usize + DW_FORCE_ATTACK, u8);
+
+    loop {
+        if !once {
+            println!("Press INSERT to exit...");
+            once = !once;
+        }
+
+        unsafe {
+            // Auto shoot
+            *shoot_flag = 5u8;
+        }
+
+        // To exit this hack loop when you input INSEERT KEY
+        if detect_keypress(VirtualKeyCode::VK_INSERT) {
+            break;
+        }
+
+        // just flexing this neat function xd.
+        if detect_keydown!(VirtualKeyCode::VK_HOME) {
+            println!("HOME is both pressed");
+        }
     }
-  }
 }
 ```
 
@@ -170,95 +181,97 @@ fn main() {
 While this code below will retrieve health value of LocalPlayer object in csgo.exe.
 Note that you have to update the offset of `DW_LOCAL_PLAYER`.
 
-`cargo b --example in_localplayer_health --target i686-pc-windows-msvc`
+`cargo b --example in_get_localplayer_health --target i686-pc-windows-msvc`
 
 ```rust
-use toy_arms::GameObject;
-use toy_arms::{cast, create_entrypoint, VirtualKeyCode};
-use toy_arms::internal::Module;
-use toy_arms_derive::GameObject;
+/*
+This example is the demonstration of getting player health with toy-arms internal memory analysis feature.
+Make sure that you inject this image to csgo.exe.
+also, the offset of DW_LOCAL_PLAYER works as of the day i wrote this but it might not be up to date in your case.
+*/
+use internal::cast;
+use internal::module::Module;
+use internal::GameObject;
+use toy_arms::derive::GameObject;
+use utils::keyboard::VirtualKeyCode;
 
-create_entrypoint!(hack_main_thread);
+internal::create_entrypoint!(hack_main_thread);
 
 // This macro provides from_raw() func that ensures the base address is not null.
 #[derive(GameObject)]
 struct LocalPlayer {
-  pointer: *const usize, // Denote the base address of LocalPlayer to use it later in get_health() function.
+    pointer: *const usize, // Denote the base address of LocalPlayer to use it later in get_health() function.
 }
 
 impl LocalPlayer {
-  unsafe fn get_health(&self) -> u16 {
-    *cast!(self.pointer as usize + 0x100, u16)
-  }
+    unsafe fn get_health(&self) -> u16 {
+        *cast!(self.pointer as usize + 0x100, u16)
+    }
 }
 
 // This offset has to be up to date.
-const DW_LOCAL_PLAYER: i32 = 0xDB25DC;
+const DW_LOCAL_PLAYER: u32 = 0xDBF4BC;
 
 fn hack_main_thread() {
-  let module = Module::from_module_name("client.dll").unwrap();
-  unsafe {
-    //let dw_local_player = memory.read_mut::<LocalPlayer>(0xDA244C);
-    loop {
-      if let Some(i) = LocalPlayer::from_raw(module.read(DW_LOCAL_PLAYER)) {
-        println!("health = {:?}", (*i).get_health());
-      };
-      if toy_arms::detect_keypress(VirtualKeyCode::VK_INSERT) {
-        break;
-      }
+    let module = Module::from_name("client.dll").unwrap();
+    unsafe {
+        //let dw_local_player = memory.read_mut::<LocalPlayer>(0xDA244C);
+        loop {
+            if let Some(i) = LocalPlayer::from_raw(module.read(DW_LOCAL_PLAYER as usize)) {
+                println!("health = {:?}", (*i).get_health());
+            };
+            if toy_arms::utils::keyboard::detect_keypress(VirtualKeyCode::VK_INSERT) {
+                break;
+            }
+        }
     }
-  }
 }
-
 ```
 
-### pattern scanning (internal)
+### pattern scan (internal)
 
 This is the pattern scanning example where the pattern is for dwForceAttack in csgo.
 
-`cargo b --example in_pattern_scanning --target i686-pc-windows-msvc`
+`cargo b --example in_pattern_scan --target i686-pc-windows-msvc`
 
 ```rust
-use toy_arms::{
-  detect_keypress,
-  internal::{
-    Module
-  },
-  VirtualKeyCode
-};
-toy_arms::create_entrypoint!(hack_main_thread);
+/*
+This is an example to demonstrate how to use powerful pattern scan feature in toy-arms.
+Make sure you inject this image to csgo.exe.
+The model pattern is for dwForceAttack.
+*/
+
+use internal::module::Module;
+use toy_arms::utils::keyboard::{detect_keypress, VirtualKeyCode};
+internal::create_entrypoint!(hack_main_thread);
 
 const DW_FORCE_ATTACK_PATTERN: &str = "89 0D ? ? ? ? 8B 0D ? ? ? ? 8B F2 8B C1 83 CE 04";
 
 fn hack_main_thread() {
-  let mut once = false;
+    let mut once = false;
 
-  let client = Module::from_module_name("client.dll").unwrap();
+    let mut client = Module::from_name("client.dll").unwrap();
 
-  match client.find_pattern(DW_FORCE_ATTACK_PATTERN) {
-    Some(i) => println!("address: 0x{:x}", i),
-    None => println!("Pattern not found"),
-  }
-
-  match client.pattern_scan(
-    DW_FORCE_ATTACK_PATTERN,
-    2,
-    0,
-  ) {
-    Some(i) => println!("address: 0x{:x}", i),
-    None => println!("Offset not found"),
-  }
-
-  loop {
-    if !once {
-      println!("Press INSERT to exit...");
-      once = !once;
+    match client.find_pattern(DW_FORCE_ATTACK_PATTERN) {
+        Some(i) => println!("[+] *dwForceAttack address: 0x{:x}", i),
+        None => println!("[-] Pattern not found"),
     }
-    // To exit this hack loop when you input INSEERT KEY
-    if detect_keypress(VirtualKeyCode::VK_INSERT) {
-      break;
+
+    match client.pattern_scan(DW_FORCE_ATTACK_PATTERN, 2, 0) {
+        Some(i) => println!("[+] dwForceAttack address: 0x{:x}", i),
+        None => println!("[-] Offset not found"),
     }
-  }
+
+    loop {
+        if !once {
+            println!("[+] Press INSERT to exit...");
+            once = !once;
+        }
+        // To exit this hack loop when you input INSEERT KEY
+        if detect_keypress(VirtualKeyCode::VK_INSERT) {
+            break;
+        }
+    }
 }
 ```
 
@@ -274,47 +287,45 @@ Note that you have to check if the address of `DW_FORCE_ATTACK` is up-to-date.
 `cargo r --example ex_auto_shoot --features external --no-default-features`
 
 ```rust
-use toy_arms::VirtualKeyCode;
-use toy_arms::external::Process;
-use toy_arms::external::{ read, write };
+/*
+This is the demonstration of how to use external feature of toy-arms.
+Following code is trying to get process id and process handle first, then getting a value called dwClientState_state.
+Then showing the way to overwrite value at dwForceAttack to make player shoot.
+The offset DW_CLIENT_STATE, DW_CLIENT_STATE_STATE and DW_FORCE_ATTACK work as of the day i wrote this but it might not be up to date in your case.
+*/
+
+use toy_arms::external::process::Process;
+use toy_arms::external::{read, write};
+use toy_arms::utils::keyboard::VirtualKeyCode;
 
 fn main() {
-  // This const has to be up to date.
-  const DW_CLIENT_STATE: usize = 0x58CFC4;
-  const DW_CLIENT_STATE_STATE: usize = 0x108;
-  const DW_FORCE_ATTACK: usize = 0x31FE33C;
-  // Getting process information
-  let process = Process::from_process_name("csgo.exe");
-  println!(
-    "process id = {}, \nprocess handle = {:?}",
-    process.process_id, process.process_handle
-  );
+    // This const has to be up to date.
+    const DW_FORCE_ATTACK: u32 = 0x320BDE8;
+    // Getting process information
+    let process = Process::from_process_name("csgo.exe").unwrap();
+    println!(
+        "[+] process id: {}, \n[+] process handle: {:?}",
+        process.id, process.handle
+    );
 
-  // You can get module information by using get_module_info
-  let module_info = process.get_module_info("client.dll").unwrap();
-  println!("{}", module_info.module_name);
+    // You can get module information by using get_module_info
+    let module_info = process.get_module_info("client.dll").unwrap();
+    println!("[+] module name: {}", module_info.name);
 
-  // read fetches the value at where the address is pointing.
-  // U have to specify the type of the value with turbofish
-  println!(
-    "{:x}",
-    read::<i32>(process.process_handle, read::<u32>(process.process_handle, process.get_module_base("engine.dll").unwrap() + DW_CLIENT_STATE).unwrap() as usize + DW_CLIENT_STATE_STATE).unwrap()
-  );
+    loop {
+        // write helps you tamper with the value.
+        write::<u32>(
+            &process.handle,
+            process.get_module_base("client.dll").unwrap() + DW_FORCE_ATTACK as usize,
+            &mut 0x5,
+        )
+        .unwrap();
 
-  loop {
-    // write helps you tamper with the value.
-    write::<u32>(
-      process.process_handle,
-      process.get_module_base("client.dll").unwrap() + DW_FORCE_ATTACK as usize,
-      &mut 0x5,
-    )
-            .unwrap();
-
-    // Exit this loop by pressing INSERT
-    if toy_arms::detect_keypress(VirtualKeyCode::VK_INSERT) {
-      break;
+        // Exit this loop by pressing INSERT
+        if toy_arms::utils::keyboard::detect_keypress(VirtualKeyCode::VK_INSERT) {
+            break;
+        }
     }
-  }
 }
 ```
 
@@ -327,97 +338,130 @@ therefore the buffer size will be 8bytes whereas the actual pointer is 4bytes. U
 `cargo r --example ex_get_localplayer_health --features external --no-default-features`
 
 ```rust
-use toy_arms::external::{Module, Process, read};
+use external::error::{ReadWriteMemoryFailedDetail, TAExternalError};
+use std::mem::size_of;
 use toy_arms::external::error::TAExternalError::ReadMemoryFailed;
+use toy_arms::external::module::Module;
+use toy_arms::external::process::Process;
+use toy_arms::external::read;
 
-const DW_LOCAL_PLAYER: u32 = 0xDB35DC;
+const DW_LOCAL_PLAYER: u32 = 0xDBF4BC;
 
 fn main() {
-  let csgo: Process;
-  match Process::from_process_name("csgo.exe") {
-    Ok(p) => csgo = p,
-    Err(e) => {
-      println!("{}", e);
-      return;
-    },
-  }
-  let client: Module;
-  match csgo.get_module_info("client.dll") {
-    Ok(m) => client = m,
-    Err(e) => {
-      println!("{}", e);
-      return;
-    },
-  }
+    let csgo: Process;
+    match Process::from_process_name("csgo.exe") {
+        Ok(p) => csgo = p,
+        Err(e) => {
+            println!("{}", e);
+            return;
+        }
+    }
+    let client: Module;
+    match csgo.get_module_info("client.dll") {
+        Ok(m) => client = m,
+        Err(e) => {
+            println!("{}", e);
+            return;
+        }
+    }
 
-  println!("module_base: {:x}", client.module_base_address);
-  println!("localplayer pointer: 0x{:x}", client.module_base_address + DW_LOCAL_PLAYER as usize);
-  let localplayer = read::<u32>(csgo.process_handle, client.module_base_address + DW_LOCAL_PLAYER as usize);
+    println!("[+] module_base: {:x}", client.base_address);
+    println!(
+        "[+] localplayer pointer pointer: 0x{:x}",
+        client.base_address + DW_LOCAL_PLAYER as usize
+    );
 
-  match localplayer {
-    Ok(l) => {
-      println!("localplayer address: 0x{:x}", l);
-      // 0x100 is the offset of the health in player entity class.
-      let health = read::<u16>(csgo.process_handle, l as usize + 0x100);
-      match health {
-        // This is what we wanted.
-        Ok(h) => println!("localplayer's health: {}", h),
-        Err(ReadMemoryFailed(e)) => println!("{}", e),
-        Err(_) => println!("some error"),
-      }
-    },
-    Err(e) => println!("error: {}", e),
-  }
+    let mut localplayer: u32 = 0;
+    let ok = read::<u32>(
+        &csgo.handle,
+        client.base_address + DW_LOCAL_PLAYER as usize,
+        size_of::<u32>(),
+        &mut localplayer as *mut u32,
+    );
+
+    match ok {
+        Ok(_ok) => {
+            println!("[+] localplayer pointer: 0x{:x}", localplayer);
+            let mut health: u16 = 0;
+            // 0x100 is the offset of the health in player entity class.
+            let ok2 = read::<u16>(
+                &csgo.handle,
+                localplayer as usize + 0x100,
+                size_of::<u16>(),
+                &mut health as *mut u16,
+            );
+            match ok2 {
+                // This is what we wanted.
+                Ok(h) => println!("[+] localplayer's health: {}", health),
+                Err(ReadMemoryFailed(e)) => println!("{}", e),
+                Err(_) => println!("[-] some error"),
+            }
+        }
+        Err(e) => match e {
+            TAExternalError::ReadMemoryFailed(ReadWriteMemoryFailedDetail::ErrorPartialCopy) => {
+                println!("Partial Copy. Probably the address is protected")
+            }
+            TAExternalError::ReadMemoryFailed(ReadWriteMemoryFailedDetail::ErrorInvalidAddress) => {
+                println!("Invalid Address")
+            }
+            TAExternalError::ReadMemoryFailed(ReadWriteMemoryFailedDetail::ErrorInvalidHandle) => {
+                println!("Invalid Handle")
+            }
+            TAExternalError::ReadMemoryFailed(ReadWriteMemoryFailedDetail::UnknownError {
+                error_code,
+            }) => println!("Unknown Error: {}", error_code),
+            _ => println!(
+                "[-] error: {}\n[-] Maybe non-updated offset are the reason. update it yourself.",
+                e
+            ),
+        },
+    }
 }
 ```
 
-### pattern scanning (external)
+### pattern scan (external)
 
 This is the pattern scanning example where the pattern is for dwForceAttack in csgo.
 
-`cargo r --example ex_pattern_scanning --features external --no-default-features`
+`cargo r --example ex_pattern_scan --features external --no-default-features`
 
 ```rust
-use toy_arms::{ VirtualKeyCode };
-use toy_arms::external::Process;
+use toy_arms::external::process::Process;
+use toy_arms::utils::keyboard::VirtualKeyCode;
 
 const DW_FORCE_ATTACK_PATTERN: &str = "89 0D ? ? ? ? 8B 0D ? ? ? ? 8B F2 8B C1 83 CE 04";
 
 fn main() {
-  let mut once = false;
+    let mut once = false;
 
-  // Getting process information
-  let process = Process::from_process_name("csgo.exe");
-  // You can get module information by using get_client
-  let client = process.get_module_info("client.dll").unwrap();
+    // Getting process information
+    let process = Process::from_process_name("csgo.exe").unwrap();
 
+    // You can get module information by using get_client
+    let mut client = process.get_module_info("client.dll").unwrap();
 
-  let address = client.find_pattern(DW_FORCE_ATTACK_PATTERN);
-  match address {
-    Some(i) => println!("found pattern at 0x{:x}", i),
-    None => println!("NOTHING FOUND"),
-  }
-
-  let offset = client.pattern_scan(
-    DW_FORCE_ATTACK_PATTERN,
-    2,
-    0,
-  );
-  match offset {
-    Some(i) => println!("found offset at 0x{:x}", i),
-    None => println!("NOTHING FOUND"),
-  }
-
-  loop {
-    if !once {
-      println!("Press INSERT to exit...");
-      once = !once;
+    let address = client.find_pattern(DW_FORCE_ATTACK_PATTERN);
+    match address {
+        Some(i) => println!("[+] found *dwForceAttack pattern at 0x{:x}", i),
+        None => println!("[-] NOTHING FOUND"),
     }
-    // Exit this loop by pressing INSERT
-    if toy_arms::detect_keydown!(VirtualKeyCode::VK_INSERT) {
-      break;
+
+    let offset = client.pattern_scan::<u32>(DW_FORCE_ATTACK_PATTERN, 2, 0);
+    match offset {
+        Some(i) => println!("[+] found dwForceAttack offset at 0x{:x}", i),
+        None => println!("NOTHING FOUND"),
     }
-  }
+
+    loop {
+        if !once {
+            println!("[+] Press INSERT to exit...");
+            once = !once;
+        }
+        // Exit this loop by pressing INSERT
+        if toy_arms::utils::detect_keydown!(VirtualKeyCode::VK_INSERT) {
+            break;
+        }
+    }
 }
 ```
 
@@ -432,6 +476,40 @@ To build examples in x86 arch:
 ```shell
 cargo build --example EXAMPLE_NAME --target i686-pc-windows-msvc
 ```
+
+# :herb: API info
+
+### external `read()` func
+
+```rs
+fn read<T>(
+    process_handle: &HANDLE,
+    base_address: usize,
+    size: usize,
+    buffer: *mut T,
+)
+```
+
+make sure to pass buffer like following:
+
+```rs
+let mut buffer: u32 = 0; // Declare with mut keyword
+read::<u32>(
+    &handle,
+    base_address,
+    size_of::<u32>(),
+    &mut buffer as *mut u32, // Must be the form of &mut buffer as *mut T
+    // These are equivalent to &buffer in C++.
+);
+```
+
+### internal `read()` func and `cast!()` macro
+
+in the example, both of them are used conditionally. They are present for different use.
+
+`cast!()` is the basic dereference and u can always use this of course.
+
+`read()` is the member method of Module struct. It allows u to just pass the offset of what u want from module base, and it adds them for you. `cast!()` is used under the hood.
 
 # Acknowledge
 [hazedumper-rs](https://github.com/frk1/hazedumper-rs) - referenced as role model of pattern scan

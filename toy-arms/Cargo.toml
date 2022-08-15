@@ -1,0 +1,55 @@
+[package]
+name = "toy-arms"
+version = "0.9.6"
+edition = "2021"
+authors = ["s3pt3mb3r <s3pt3mb3r@protonmail.com>"]
+description = "A crates designed to ease game hacking in rust."
+license = "MIT"
+keywords = ["gamehack", "cheat", "windows", "memory"]
+repository = "https://github.com/s3pt3mb3r/toy-arms"
+readme = "README.md"
+
+[features]
+default = ["internal"]
+internal = []
+external = []
+
+[dependencies]
+winapi = { version = "0.3.9", features = ["winuser", "winnt"] }
+internal = { path = "../internal" }
+external = { path = "../external" }
+utils = {package = "toy-arms_utils", path = "../toy-arms_utils"}
+derive = {package = "toy-arms_derive", path = "../toy-arms_derive"}
+
+[package.metadata.docs.rs]
+features = ["internal", "external"]
+default-target = "x86_64-pc-windows-msvc"
+targets = ["aarch64-pc-windows-msvc", "i686-pc-windows-msvc", "x86_64-pc-windows-msvc"]
+
+[[example]]
+name = "in_simplest_dll"
+crate-type = ["cdylib"]
+
+[[example]]
+name = "in_auto_shoot"
+crate-type = ["cdylib"]
+
+[[example]]
+name = "in_get_localplayer_health"
+crate-type = ["cdylib"]
+
+[[example]]
+name = "in_pattern_scan"
+crate-type = ["cdylib"]
+
+[[example]]
+name = "ex_auto_shoot"
+required-features = ["external"]
+
+[[example]]
+name = "ex_get_localplayer_health"
+required-features = ["external"]
+
+[[example]]
+name = "ex_pattern_scan"
+required-features = ["external"]
