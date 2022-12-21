@@ -13,7 +13,7 @@ Huge thanks to my pal for this header [@suzuharuR](https://twitter.com/suzuharuR
 </div>
 
 # What's toy-arms?
-This library is meant to be created to try rust's capability for game hack use. Consider this as my training of rust, can't guarantee the quality of the code. long story short, windows api wrapper to ease hack development.
+This library is meant to be created to test rust's capability for game hacking. However, cuz I was too lazy and beginner this library is relatively high level, meaning it doesnt use either Nt or Zw API or PEB, TEB, context thing. Consider this as my training of rust, can't guarantee the quality of the code. long story short, windows api wrapper to ease hack development.
 
 # :pushpin: Table of contents
 
@@ -33,10 +33,6 @@ This library is meant to be created to try rust's capability for game hack use. 
     - [pattern scan](#pattern-scan-external)
 - [:card_file_box: Other examples?](#card_file_box-other-examples)
 - [:herb: API info](#herb-api-info)
-
-# :two_hearts: support me
-**Donating me through GitHub sponsors** would be the best way to support me and this project.
-You can also support me by **starring this project**, or any kind of **PR** that either refactoring this project, or adding new feature would pump me up!
 
 # :fire: Get started
 
