@@ -13,7 +13,7 @@ Huge thanks to my pal for this header [@suzuharuR](https://twitter.com/suzuharuR
 </div>
 
 # What's toy-arms?
-This library is meant to be created to test rust's capability for game hacking. u know it's kinda far from normal programming, right? However, cuz I was too lazy and beginner this library is relatively high level, meaning it doesnt use either Nt or Zw API or PEB, TEB, context thing. Dont get it something fancy, rather consider this as my training of rust, can't guarantee the quality of the code. 
+This library is meant to be created to test rust's capability for game hacking. u know it's kinda far from normal programming, right? However, cuz I was too lazy and beginner this library is relatively high level, meaning it doesnt use either Nt or Zw API or PEB, TEB, context thing. Dont get it something fancy, rather consider this as my training of rust, can't guarantee the quality of the code. Oh, and never ever mention about the bizzar project structure, even if it looks bloody cringy. My bad.
 
 # :pushpin: Table of contents
 
