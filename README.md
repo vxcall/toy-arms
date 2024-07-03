@@ -47,7 +47,7 @@ As of now toy-arms has 2 features which are `internal` and `external`.
 **for internal use:**
 ```toml
 [dependencies]
-toy-arms = {git = "version = "https://github.com/pseuxide/toy-arms"}
+toy-arms = {git = "version = "https://github.com/vxcall/toy-arms"}
 
 # This annotation below is to tell the compiler to compile this into dll. MUST.
 [lib]
@@ -57,7 +57,7 @@ crate-type = ["cdylib"]
 **for external use:**
 ```toml
 [dependencies]
-toy-arms = {git = "https://github.com/pseuxide/toy-arms", features = ["external"]}
+toy-arms = {git = "https://github.com/vxcall/toy-arms", features = ["external"]}
 ```
 
 ## step2
