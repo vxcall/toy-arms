@@ -26,7 +26,7 @@ This repository is a library that enables game hack development in Rust. However
     - [simplest dll](#simplest-dll-internal)
     - [auto shoot](#auto-shoot-internal)
     - [get localplayer health](#get-localplayer-health-internal)
-    - [pattern scang](#pattern-scan-internal)
+    - [pattern scan](#pattern-scan-internal)
   - [external](#external)
     - [auto shoot](#auto-shoot-external)
     - [get localpalyer health](#get-localplayer-health-external)
